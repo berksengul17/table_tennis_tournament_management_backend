@@ -1,4 +1,4 @@
-package com.berk.table_tennis_tournament_management_backend.player;
+package com.berk.table_tennis_tournament_management_backend.participant;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -14,7 +14,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-public class Player {
+public class Participant {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
