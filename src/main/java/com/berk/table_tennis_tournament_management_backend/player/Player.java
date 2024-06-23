@@ -25,7 +25,6 @@ public class Player {
     private String phoneNumber;
     private String gender;
     private LocalDate birthDate;
-    // int olabilir belki her bir sayı bir kategoriye karşılık gelir
-    private String ageCategory;
+    private int ageCategory;
     private String city;
 }
