@@ -1,4 +1,4 @@
-package com.berk.table_tennis_tournament_management_backend.categorizedParticipant;
+package com.berk.table_tennis_tournament_management_backend.ageGroup;
 
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import jakarta.persistence.*;
@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CategorizedParticipant {
+public class AgeGroup {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -34,4 +34,10 @@ public class ParticipantController {
     public Map<Integer, List<Participant>> getCategorizedParticipants() {
         return participantService.loadCategorizedParticipants();
     }
+
+    @GetMapping("/distribute")
+    public Map<Integer, List<List<Participant>>> distributeParticipantsToTables(@RequestParam int totalTables) {
+        Map<Integer, List<Participant>> categorizedParticipants = participantService.categorizeParticipants();
+        return participantService.distributeParticipantsToTables(categorizedParticipants, totalTables);
+    }
 }
