@@ -1,13 +1,13 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
-import com.berk.table_tennis_tournament_management_backend.ageGroup.AgeGroup;
-import com.berk.table_tennis_tournament_management_backend.ageGroup.AgeGroupRepository;
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 /*
 @Service
 public class ParticipantService {
@@ -61,11 +61,9 @@ public class ParticipantService {
 public class ParticipantService {
 
     private final ParticipantRepository participantRepository;
-    private final AgeGroupRepository ageGroupRepository;
 
-    public ParticipantService(ParticipantRepository participantRepository, AgeGroupRepository ageGroupRepository) {
+    public ParticipantService(ParticipantRepository participantRepository) {
         this.participantRepository = participantRepository;
-        this.ageGroupRepository = ageGroupRepository;
     }
 
     public Participant register(Participant participant) {
@@ -74,41 +72,6 @@ public class ParticipantService {
 
     public List<Participant> getParticipants() {
         return participantRepository.findAll();
-    }
-
-    public Map<Integer, List<Participant>> categorizeParticipants() {
-        List<Participant> participants = getParticipants();
-        Map<Integer, List<Participant>> categorizedParticipants = new HashMap<>();
-
-        for (Participant participant : participants) {
-            int ageCategory = participant.getAgeCategory();
-            List<Participant> players = categorizedParticipants.getOrDefault(ageCategory, new ArrayList<>());
-            players.add(participant);
-            categorizedParticipants.put(ageCategory, players);
-        }
-
-        saveCategorizedParticipants(categorizedParticipants);
-
-        return categorizedParticipants;
-    }
-
-    private void saveCategorizedParticipants(Map<Integer, List<Participant>> categorizedParticipants) {
-        ageGroupRepository.deleteAll(); // Clear previous data
-        for (Map.Entry<Integer, List<Participant>> entry : categorizedParticipants.entrySet()) {
-            AgeGroup cp = new AgeGroup();
-            cp.setAgeCategory(entry.getKey());
-            cp.setParticipants(entry.getValue());
-            ageGroupRepository.save(cp);
-        }
-    }
-
-    public Map<Integer, List<Participant>> loadCategorizedParticipants() {
-        List<AgeGroup> categorizedEntities = ageGroupRepository.findAll();
-        Map<Integer, List<Participant>> categorizedParticipants = new HashMap<>();
-        for (AgeGroup entity : categorizedEntities) {
-            categorizedParticipants.put(entity.getAgeCategory(), entity.getParticipants());
-        }
-        return categorizedParticipants;
     }
 
     public List<AgeCategoryWeight> calculateAgeCategoryWeights(Map<Integer, List<Participant>> categorizedParticipants, int totalTables) {

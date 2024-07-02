@@ -25,19 +25,9 @@ public class ParticipantController {
         return participantService.getParticipants();
     }
 
-    @PostMapping("/participants/categorize")
-    public Map<Integer, List<Participant>> categorizeParticipants() {
-        return participantService.categorizeParticipants();
-    }
-
-    @GetMapping("/participants/categorized")
-    public Map<Integer, List<Participant>> getCategorizedParticipants() {
-        return participantService.loadCategorizedParticipants();
-    }
-
-    @GetMapping("/distribute")
-    public Map<Integer, List<List<Participant>>> distributeParticipantsToTables(@RequestParam int totalTables) {
-        Map<Integer, List<Participant>> categorizedParticipants = participantService.categorizeParticipants();
-        return participantService.distributeParticipantsToTables(categorizedParticipants, totalTables);
-    }
+//    @GetMapping("/distribute")
+//    public Map<Integer, List<List<Participant>>> distributeParticipantsToTables(@RequestParam int totalTables) {
+//        Map<Integer, List<Participant>> categorizedParticipants = participantService.categorizeParticipants();
+//        return participantService.distributeParticipantsToTables(categorizedParticipants, totalTables);
+//    }
 }

@@ -46,6 +46,7 @@ public class DataInitializer implements CommandLineRunner {
             participant.setBirthDate(LocalDate.now().minusYears(random.nextInt(50) + 18));
             participant.setAgeCategory(random.nextInt(4)); // 0, 1, 2, or 3
             participant.setCity(cities[random.nextInt(cities.length)]);
+            participant.setRating((random.nextInt(201) + 100) * 10);
 
             participants.add(participant);
         }

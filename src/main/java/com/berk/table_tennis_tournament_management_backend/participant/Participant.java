@@ -27,4 +27,5 @@ public class Participant {
     private LocalDate birthDate;
     private int ageCategory;
     private String city;
+    private int rating;
 }

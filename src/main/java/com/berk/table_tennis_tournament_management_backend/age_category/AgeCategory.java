@@ -1,4 +1,4 @@
-package com.berk.table_tennis_tournament_management_backend.ageGroup;
+package com.berk.table_tennis_tournament_management_backend.age_category;
 
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import jakarta.persistence.*;
@@ -12,12 +12,11 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AgeGroup {
-
+public class AgeCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private int ageCategory;
+    private int category;
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JoinColumn(name = "categorized_player_id")
     private List<Participant> participants;

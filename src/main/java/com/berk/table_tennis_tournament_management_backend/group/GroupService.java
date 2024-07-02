@@ -1,0 +1,65 @@
+package com.berk.table_tennis_tournament_management_backend.group;
+
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.participant.Participant;
+import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Service
+public class GroupService {
+
+    private final AgeCategoryRepository ageCategoryRepository;
+    private final GroupRepository groupRepository;
+
+    public GroupService(AgeCategoryRepository ageCategoryRepository, GroupRepository groupRepository) {
+        this.ageCategoryRepository = ageCategoryRepository;
+        this.groupRepository = groupRepository;
+    }
+
+    @Transactional
+    public List<Group> createGroupsForAgeCategory(int ageCategoryVal) {
+        List<Group> groups = new ArrayList<>();
+        AgeCategory ageCategory = ageCategoryRepository.findByCategory(ageCategoryVal);
+        if (ageCategory == null) {
+            return groups;
+        }
+
+        List<Participant> participants = ageCategory.getParticipants();
+        participants.sort(new ParticipantComparator());
+
+        int numOfParticipants = participants.size();
+        int numOfGroups = numOfParticipants / 4;
+
+        // Ensure there is at least one group
+        if (numOfGroups == 0) {
+            numOfGroups = 1;
+        }
+
+        // Initialize the groups
+        for (int i = 0; i < numOfGroups; i++) {
+            groups.add(new Group(ageCategoryVal, new ArrayList<>()));
+        }
+
+        // Distribute participants in a round-robin fashion
+        for (int i = 0; i < numOfParticipants; i++) {
+            int groupIndex = i % numOfGroups;
+            groups.get(groupIndex).getParticipants().add(participants.get(i));
+        }
+
+        // Save the groups to the database
+        return groupRepository.saveAll(groups);
+    }
+
+    public List<Group> loadGroupsForAgeCategory(int ageCategory) {
+        return groupRepository.findByAgeCategory(ageCategory);
+    }
+
+    public List<Group> loadAllGroups() {
+        return groupRepository.findAll();
+    }
+}
