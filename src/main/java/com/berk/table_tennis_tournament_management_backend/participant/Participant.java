@@ -1,9 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.berk.table_tennis_tournament_management_backend.group.Group;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

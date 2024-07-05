@@ -62,4 +62,10 @@ public class GroupService {
     public List<Group> loadAllGroups() {
         return groupRepository.findAll();
     }
+
+    @Transactional
+    public List<Group> saveGroups(List<Group> groups) {
+        groupRepository.deleteAll();
+        return groupRepository.saveAll(groups);
+    }
 }

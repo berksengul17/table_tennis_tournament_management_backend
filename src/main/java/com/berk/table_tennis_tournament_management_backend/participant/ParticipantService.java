@@ -1,6 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class ParticipantService {
     }
 
     public List<Participant> getParticipants() {
-        return participantRepository.findAll();
+        return participantRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
     }
 
     public List<AgeCategoryWeight> calculateAgeCategoryWeights(Map<Integer, List<Participant>> categorizedParticipants, int totalTables) {

@@ -30,4 +30,9 @@ public class GroupController {
     public List<Group> loadAllGroups() {
         return groupService.loadAllGroups();
     }
+
+    @PostMapping("/save")
+    public List<Group> saveGroups(@RequestBody List<Group> groups) {
+        return groupService.saveGroups(groups);
+    }
 }

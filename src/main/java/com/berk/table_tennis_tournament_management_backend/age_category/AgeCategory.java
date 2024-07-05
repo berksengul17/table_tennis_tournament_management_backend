@@ -17,7 +17,7 @@ public class AgeCategory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private int category;
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "categorized_player_id")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY)
+    @JoinColumn(name = "age_category_id")
     private List<Participant> participants;
 }
