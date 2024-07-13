@@ -27,13 +27,13 @@ public class AgeCategoryService {
 
         for (Participant participant : participants) {
             AgeCategory existingCategory = ageCategories.stream()
-                    .filter(ageCategory -> ageCategory.getCategory() == participant.getAgeCategory())
+                    .filter(ageCategory -> ageCategory.getCategory() == participant.getAgeCategory().getCategory())
                     .findFirst()
                     .orElse(null);
 
             if (existingCategory == null) {
                 AgeCategory newCategory = new AgeCategory();
-                newCategory.setCategory(participant.getAgeCategory());
+                newCategory.setCategory(participant.getAgeCategory().getCategory());
                 newCategory.setParticipants(new ArrayList<>());
                 newCategory.getParticipants().add(participant);
                 ageCategories.add(newCategory);

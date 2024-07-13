@@ -4,6 +4,7 @@ import com.berk.table_tennis_tournament_management_backend.age_category.AgeCateg
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
+import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +15,12 @@ import java.util.List;
 public class GroupService {
 
     private final AgeCategoryRepository ageCategoryRepository;
+    private final ParticipantRepository participantRepository;
     private final GroupRepository groupRepository;
 
-    public GroupService(AgeCategoryRepository ageCategoryRepository, GroupRepository groupRepository) {
+    public GroupService(AgeCategoryRepository ageCategoryRepository, ParticipantRepository participantRepository, GroupRepository groupRepository) {
         this.ageCategoryRepository = ageCategoryRepository;
+        this.participantRepository = participantRepository;
         this.groupRepository = groupRepository;
     }
 
@@ -48,6 +51,10 @@ public class GroupService {
         // Distribute participants in a round-robin fashion
         for (int i = 0; i < numOfParticipants; i++) {
             int groupIndex = i % numOfGroups;
+            Participant participant = participants.get(i);
+            participant.setGroupRanking(groups.get(groupIndex).getParticipants().size() + 1);
+            participant.setGroup(groups.get(groupIndex));
+            participantRepository.save(participant);
             groups.get(groupIndex).getParticipants().add(participants.get(i));
         }
 

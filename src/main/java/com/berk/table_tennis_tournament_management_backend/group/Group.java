@@ -18,8 +18,8 @@ public class Group {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private int ageCategory;
-    @OneToMany(fetch = FetchType.LAZY)
-    @JoinColumn(name = "group_id")
+    // TODO: burda cascade i çıkarınca niye düzeldi araştır
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "group")
     private List<Participant> participants;
 
     public Group(int ageCategory, List<Participant> participants) {

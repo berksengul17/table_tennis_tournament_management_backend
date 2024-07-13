@@ -1,5 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend;
 
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -14,9 +16,11 @@ import java.util.Random;
 public class DataInitializer implements CommandLineRunner {
 
     private final ParticipantRepository participantRepository;
+    private final AgeCategoryRepository ageCategoryRepository;
 
-    public DataInitializer(ParticipantRepository participantRepository) {
+    public DataInitializer(ParticipantRepository participantRepository, AgeCategoryRepository ageCategoryRepository) {
         this.participantRepository = participantRepository;
+        this.ageCategoryRepository = ageCategoryRepository;
     }
 
     @Override
@@ -24,7 +28,7 @@ public class DataInitializer implements CommandLineRunner {
         if (participantRepository.count() == 0) {
             List<Participant> participants = generateParticipants();
             participantRepository.saveAll(participants);
-            System.out.println("Saved 50 participants to the database.");
+            System.out.println("Saved participants to the database.");
         }
     }
 
@@ -35,8 +39,13 @@ public class DataInitializer implements CommandLineRunner {
         String[] lastNames = {"Ceylan", "Yılmaz", "Demir", "Kaya", "Şahin", "Çelik", "Arslan", "Öztürk", "Koç", "Acar"};
         String[] cities = {"İzmir", "Ankara", "İstanbul", "Bursa", "Antalya", "Konya", "Adana", "Gaziantep", "Mersin", "Eskişehir"};
         String[] genders = {"Kadın", "Erkek"};
+        List<AgeCategory> ageCategories = List.of(new AgeCategory(0), new AgeCategory(1),
+                                        new AgeCategory(2), new AgeCategory(3),
+                                        new AgeCategory(4));
 
-        for (int i = 0; i < 50; i++) {
+        ageCategoryRepository.saveAll(ageCategories);
+
+        for (int i = 0; i < 120; i++) {
             Participant participant = new Participant();
             participant.setFirstName(firstNames[random.nextInt(firstNames.length)]);
             participant.setLastName(lastNames[random.nextInt(lastNames.length)]);
@@ -44,7 +53,7 @@ public class DataInitializer implements CommandLineRunner {
             participant.setPhoneNumber(String.format("%03d %03d %02d %02d", random.nextInt(1000), random.nextInt(1000), random.nextInt(100), random.nextInt(100)));
             participant.setGender(genders[random.nextInt(genders.length)]);
             participant.setBirthDate(LocalDate.now().minusYears(random.nextInt(50) + 18));
-            participant.setAgeCategory(random.nextInt(5));
+            participant.setAgeCategory(ageCategories.get(random.nextInt(5)));
             participant.setCity(cities[random.nextInt(cities.length)]);
             participant.setRating((random.nextInt(201) + 100) * 10);
 

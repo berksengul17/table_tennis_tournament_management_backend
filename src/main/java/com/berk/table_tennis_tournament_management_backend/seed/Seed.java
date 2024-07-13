@@ -1,4 +1,4 @@
-package com.berk.table_tennis_tournament_management_backend.age_category;
+package com.berk.table_tennis_tournament_management_backend.seed;
 
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import jakarta.persistence.*;
@@ -12,15 +12,13 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class AgeCategory {
+public class Seed {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private int category;
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY, mappedBy = "ageCategory")
+    @ManyToMany
+    @JoinTable(name = "seed_participant",
+            joinColumns = @JoinColumn(name="seed_id"),
+            inverseJoinColumns = @JoinColumn(name = "participant_id"))
     private List<Participant> participants;
-
-    public AgeCategory(int category) {
-        this.category = category;
-    }
 }
