@@ -15,7 +15,7 @@ public class BracketController {
     private final BracketService bracketService;
 
     @PostMapping("/create/{ageCategory}")
-    public Participant[] createWinnerBracket(@PathVariable int ageCategory) {
+    public Bracket createWinnerBracket(@PathVariable int ageCategory) {
         return bracketService.createWinnersBracket(ageCategory);
     }
 }

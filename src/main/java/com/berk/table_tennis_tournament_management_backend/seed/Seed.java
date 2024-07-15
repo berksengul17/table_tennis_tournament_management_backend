@@ -21,4 +21,8 @@ public class Seed {
             joinColumns = @JoinColumn(name="seed_id"),
             inverseJoinColumns = @JoinColumn(name = "participant_id"))
     private List<Participant> participants;
+
+    public Seed(List<Participant> participants) {
+        this.participants = participants;
+    }
 }

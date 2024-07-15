@@ -45,7 +45,7 @@ public class DataInitializer implements CommandLineRunner {
 
         ageCategoryRepository.saveAll(ageCategories);
 
-        for (int i = 0; i < 120; i++) {
+        for (int i = 0; i < 128; i++) {
             Participant participant = new Participant();
             participant.setFirstName(firstNames[random.nextInt(firstNames.length)]);
             participant.setLastName(lastNames[random.nextInt(lastNames.length)]);
