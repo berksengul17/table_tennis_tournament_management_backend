@@ -13,10 +13,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -65,10 +62,58 @@ public class BracketService {
         int numOfSeeds = perfectParticipantSize / 2;
         int numOfByes = perfectParticipantSize - bracketSize;
 
-        List<Seed> seeds = Arrays.asList(new Seed[numOfSeeds]);
+        List<Seed> seeds = new ArrayList<>(Collections.nCopies(numOfSeeds, null));
         calculateByes(seeds, numOfByes, startingIndex, participants);
 
-        // TODO geri kalan boşul nasıl doldurulcak?
+        // TODO geri kalan boşluk nasıl doldurulcak?
+        int currIndex = startingIndex == 0 ? 0 : 3;
+        for (int i=0; i<seeds.size(); i++) {
+            Seed seed = new Seed();
+            if (seeds.get(i) == null) {
+                // if upper bracket and the first group winner
+                if (startingIndex == 0 && currIndex == 0) {
+                    seed.setParticipants(new ArrayList<>(
+                            List.of(participants.get(currIndex))
+                    ));
+                    // match the participant with the last odd numbered participant
+                    int size = participants.size();
+                    if (size % 2 == 0) {
+                        seed.getParticipants().add(participants.get(size - 2));
+                        currIndex = size - 5;
+                    } else {
+                        seed.getParticipants().add(participants.get(size - 1));
+                        currIndex = size - 4;
+                    }
+                } else if (startingIndex == 1 && currIndex == 5) {
+                    seed.setParticipants(new ArrayList<>(
+                            List.of(participants.get(currIndex), participants.get(currIndex - 4))
+                    ));
+                } else if (startingIndex == 1 && currIndex == 3) {
+                    seed.setParticipants(new ArrayList<>(
+                            List.of(participants.get(currIndex))
+                    ));
+                    // match the participant with the last odd numbered participant
+                    int size = participants.size();
+                    if (size % 2 == 0) {
+                        seed.getParticipants().add(participants.get(size - 1));
+                        currIndex = size - 3;
+                    } else {
+                        seed.getParticipants().add(participants.get(size - 2));
+                        currIndex = size - 4;
+                    }
+                } else {
+                    if (currIndex - 2 > 0 && currIndex < participants.size()) {
+                        seed.setParticipants(new ArrayList<>(
+                                List.of(participants.get(currIndex),
+                                        participants.get(currIndex - 2))));
+                        currIndex -= 4;
+                    }
+                }
+
+                seeds.set(i, seed);
+            }
+        }
+
 
         return seeds;
     }
