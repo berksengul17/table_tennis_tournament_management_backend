@@ -1,6 +1,8 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
@@ -59,15 +61,15 @@ public class ParticipantService {
 }
 */
 @Service
+@AllArgsConstructor
 public class ParticipantService {
 
     private final ParticipantRepository participantRepository;
+    private final AgeCategoryRepository ageCategoryRepository;
 
-    public ParticipantService(ParticipantRepository participantRepository) {
-        this.participantRepository = participantRepository;
-    }
-
-    public Participant register(Participant participant) {
+    public Participant register(ParticipantDTO participantDTO) {
+        Participant participant = new Participant(participantDTO);
+        participant.setAgeCategory(ageCategoryRepository.findByCategory(participantDTO.getAgeCategory()));
         return participantRepository.save(participant);
     }
 

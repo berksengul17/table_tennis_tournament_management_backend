@@ -22,8 +22,12 @@ public class AgeCategoryService {
 
     @Transactional
     public List<AgeCategory> createAgeCategories() {
+        List<AgeCategory> ageCategories = loadAgeCategories();
+
+        if (!ageCategories.isEmpty()) {
+            return ageCategories;
+        }
         List<Participant> participants = participantService.getParticipants();
-        List<AgeCategory> ageCategories = new ArrayList<>();
 
         for (Participant participant : participants) {
             AgeCategory existingCategory = ageCategories.stream()

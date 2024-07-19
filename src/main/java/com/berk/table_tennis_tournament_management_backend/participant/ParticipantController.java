@@ -3,7 +3,6 @@ package com.berk.table_tennis_tournament_management_backend.participant;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/player")
@@ -16,7 +15,7 @@ public class ParticipantController {
     }
 
     @PostMapping("/register")
-    public Participant register(@RequestBody Participant newParticipant) {
+    public Participant register(@RequestBody ParticipantDTO newParticipant) {
         return participantService.register(newParticipant);
     }
 

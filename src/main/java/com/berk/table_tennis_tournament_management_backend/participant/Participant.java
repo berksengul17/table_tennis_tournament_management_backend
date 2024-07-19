@@ -2,7 +2,9 @@ package com.berk.table_tennis_tournament_management_backend.participant;
 
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.group.Group;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,7 +29,7 @@ public class Participant {
     private LocalDate birthDate;
     @ManyToOne
     @JoinColumn(name="age_category_id", nullable=false)
-    @JsonIgnore
+    @JsonIgnoreProperties("participants")
     private AgeCategory ageCategory;
     @ManyToOne
     @JoinColumn(name = "group_id")
@@ -36,4 +38,14 @@ public class Participant {
     private String city;
     private int rating;
     private int groupRanking;
+
+    public Participant(ParticipantDTO participantDTO) {
+        this.firstName = participantDTO.getFirstName();
+        this.lastName = participantDTO.getLastName();
+        this.email = participantDTO.getEmail();
+        this.phoneNumber = participantDTO.getPhoneNumber();
+        this.gender = participantDTO.getGender();
+        this.birthDate = participantDTO.getBirthDate();
+        this.city = participantDTO.getCity();
+    }
 }
