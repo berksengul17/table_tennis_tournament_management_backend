@@ -59,7 +59,9 @@ public class GroupService {
         }
 
         // Save the groups to the database
-        return groupRepository.saveAll(groups);
+        List<Group> savedGroups = groupRepository.saveAll(groups);
+        sortGroupParticipants(savedGroups);
+        return savedGroups;
     }
 
     public List<Group> loadGroupsForAgeCategory(int ageCategory) {
@@ -67,12 +69,20 @@ public class GroupService {
     }
 
     public List<Group> loadAllGroups() {
-        return groupRepository.findAll();
+        List<Group> foundGroups = groupRepository.findAll();
+        sortGroupParticipants(foundGroups);
+        return foundGroups;
     }
 
     @Transactional
     public List<Group> saveGroups(List<Group> groups) {
         groupRepository.deleteAll();
         return groupRepository.saveAll(groups);
+    }
+
+    private void sortGroupParticipants(List<Group> groups) {
+        for (Group group: groups) {
+            group.getParticipants().sort(new ParticipantComparator());
+        }
     }
 }

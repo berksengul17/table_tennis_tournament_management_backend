@@ -111,6 +111,17 @@ public class BracketService {
                 }
 
                 seeds.set(i, seed);
+            } else {
+                int size = participants.size();
+                if (currIndex == 0) {
+                    currIndex = size % 2 == 0 ? size - 2 : size - 1;
+                } else if (currIndex == 3) {
+                    currIndex = size % 2 == 0 ? size - 1 : size - 2;
+                } else if (startingIndex == 1 && i == seeds.size() - 2) {
+                    currIndex = 1;
+                } else {
+                    currIndex -= 2;
+                }
             }
         }
 
@@ -120,18 +131,23 @@ public class BracketService {
 
     private void calculateByes(List<Seed> seeds, int numOfByes, int startingIndex,
                             List<Participant> participants) {
-        int seedIndex = 0;
+        int currIndex = startingIndex;
+        int seedIndex = startingIndex == 0 ? 0 : seeds.size() - 1;
         for (int i=0; i<numOfByes; i++) {
-            Participant byeParticipant = participants.get(startingIndex);
-            seeds.add(seedIndex, new Seed(new ArrayList<>(List.of(byeParticipant))));
+            Participant byeParticipant = participants.get(currIndex);
+            seeds.set(seedIndex, new Seed(new ArrayList<>(List.of(byeParticipant))));
 
-            if (startingIndex == 0) {
+            if (currIndex == 0) {
                 seedIndex = seeds.size() - 1;
+            } else if (currIndex == 1) {
+                seedIndex = 0;
+            } else if (currIndex == 3) {
+                seedIndex = seeds.size() - 2;
             } else {
                 seedIndex--;
             }
 
-            startingIndex += 2;
+            currIndex += 2;
         }
     }
 
