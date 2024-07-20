@@ -7,15 +7,13 @@ import com.berk.table_tennis_tournament_management_backend.round.Round;
 import com.berk.table_tennis_tournament_management_backend.round.RoundRepository;
 import com.berk.table_tennis_tournament_management_backend.seed.Seed;
 import com.berk.table_tennis_tournament_management_backend.seed.SeedRepository;
-import jakarta.servlet.http.Part;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.Array;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
@@ -79,10 +77,10 @@ public class BracketService {
                     int size = participants.size();
                     if (size % 2 == 0) {
                         seed.getParticipants().add(participants.get(size - 2));
-                        currIndex = size - 5;
+                        currIndex = size - 4;
                     } else {
                         seed.getParticipants().add(participants.get(size - 1));
-                        currIndex = size - 4;
+                        currIndex = size - 3;
                     }
                 } else if (startingIndex == 1 && currIndex == 5) {
                     seed.setParticipants(new ArrayList<>(
