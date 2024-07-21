@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/player")
+@RequestMapping("/api/participant")
 public class ParticipantController {
 
     private final ParticipantService participantService;
@@ -19,7 +19,7 @@ public class ParticipantController {
         return participantService.register(newParticipant);
     }
 
-    @GetMapping("/participants")
+    @GetMapping("/get-all-participants")
     public List<Participant> getParticipants() {
         return participantService.getParticipants();
     }
