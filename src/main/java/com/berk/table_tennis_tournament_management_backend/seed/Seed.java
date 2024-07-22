@@ -1,6 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend.seed;
 
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
+import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,4 +26,14 @@ public class Seed {
     public Seed(List<Participant> participants) {
         this.participants = participants;
     }
+
+    // FIXME: Burdaki sort advanceToNextRound u bozuyor. Nerde lazımsa orda sort olması lazım
+//    public List<Participant> getParticipants() {
+//        if (participants != null) {
+//            participants.sort(new ParticipantComparator());
+//            return participants;
+//        }
+//
+//        return null;
+//    }
 }

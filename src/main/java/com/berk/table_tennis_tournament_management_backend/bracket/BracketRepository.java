@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface BracketRepository extends JpaRepository<Bracket, Long> {
+    Bracket findByAgeCategory_CategoryAndBracketType(int ageCategory, BRACKET_TYPE bracketType);
 }
