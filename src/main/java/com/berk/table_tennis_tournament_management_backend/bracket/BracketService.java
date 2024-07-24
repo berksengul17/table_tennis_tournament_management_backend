@@ -30,6 +30,21 @@ public class BracketService {
         return bracketRepository.findByAgeCategory_CategoryAndBracketType(ageCategory, BRACKET_TYPE.LOSERS);
     }
 
+//        List<Round> rounds = bracket.getRounds();
+//
+//        if (rounds == null) return null;
+//
+//        List<Round> foundRounds = rounds
+//                .stream()
+//                .filter(r -> Objects.equals(r.getId(), roundId))
+//                .toList();
+//
+//        if (foundRounds.isEmpty()) return null;
+//        Round round = foundRounds.get(0);
+//
+//        int index = rounds.indexOf(round);
+//        if (index == -1) return null;
+
     public Bracket advanceToNextRound(Long participantId, Long bracketId, Long roundId) {
         Bracket bracket = bracketRepository.findById(bracketId).orElse(null);
         Participant participant = participantRepository.findById(participantId).orElse(null);
@@ -37,67 +52,33 @@ public class BracketService {
         if (bracket == null) return null;
         if (participant == null) return null;
 
-        List<Round> rounds = bracket.getRounds();
-
-        if (rounds == null) return null;
-
-        List<Round> foundRounds = rounds
-                .stream()
-                .filter(r -> Objects.equals(r.getId(), roundId))
-                .toList();
-
-        if (foundRounds.isEmpty()) return null;
-        Round round = foundRounds.get(0);
-
-        Round nextRound = null;
-        for (int i=0; i<rounds.size(); i++) {
-            if (Objects.equals(rounds.get(i).getId(), round.getId())) {
-                if (i + 1 >= rounds.size()) {
-                    List<Seed> seeds = new ArrayList<>();
-                    for (int j = 0; j < rounds.get(i).getSeeds().size() / 2; j++) {
-                        seeds.add(new Seed());
-                    }
-                    seedRepository.saveAll(seeds);
-                    nextRound = new Round(bracket, seeds);
-                    roundRepository.save(nextRound);
-                    rounds.add(nextRound);
-                } else {
-                    nextRound = rounds.get(++i);
-                }
-                break;
-            }
-        }
+        Round round = roundRepository.findById(roundId).orElse(null);
+        Round nextRound = roundRepository.findById(roundId + 1).orElse(null);
+        if (round == null || nextRound == null) return null;
 
         List<Seed> seeds = round.getSeeds();
-        int nextRoundSeedIndex = 0;
-        boolean isLowerSeed = false;
-        for (int i=0; i<seeds.size(); i++) {
-            if (seeds.get(i).getParticipants().contains(participant)) {
-                double actualResult = i / 2.0;
-                nextRoundSeedIndex = (int) Math.floor(actualResult);
-                if (actualResult - nextRoundSeedIndex > 0) {
-                    isLowerSeed = true;
-                }
-                break;
-            }
-        }
+        SeedResult result = calculateSeedInfo(seeds, participant);
+        int nextRoundSeedIndex = result.getNextRoundSeedIndex();
+        boolean isLowerSeed = result.isLowerSeed();
 
         List<Seed> nextRoundSeeds = nextRound.getSeeds();
         Seed nextRoundSeed = nextRoundSeeds.get(nextRoundSeedIndex);
 
         List<Participant> nextRoundSeedParticipants = nextRoundSeed.getParticipants();
-        if (nextRoundSeedParticipants == null) {
-            nextRoundSeedParticipants = new ArrayList<>();
-            nextRoundSeed.setParticipants(nextRoundSeedParticipants);
-        }
-
-        if (nextRoundSeedParticipants.size() >= 1) {
-            nextRoundSeedParticipants.add(isLowerSeed ? 1 : 0, participant);
-        } else {
+        // FIXME BURA BÖYLE OLMAZ BAŞKA BİR ÇÖZÜM BUL
+        // SIZE DB DE NULL PARTICIPANT_ID OLMADIĞI İÇİN 1 GELİYO OLABİLİR
+        if (isLowerSeed && (nextRoundSeedParticipants.size() == 1 || nextRoundSeedParticipants.isEmpty())) {
             nextRoundSeedParticipants.add(participant);
+        } else if (!isLowerSeed && nextRoundSeedParticipants.size() == 1) {
+            nextRoundSeedParticipants.add(nextRoundSeedParticipants.get(0));
+            nextRoundSeedParticipants.set(0, participant);
+        } else if (!isLowerSeed && nextRoundSeedParticipants.isEmpty()) {
+            nextRoundSeedParticipants.add(participant);
+        } else {
+            nextRoundSeedParticipants.set(isLowerSeed ? 1 : 0, participant);
         }
-        seedRepository.save(nextRoundSeed);
 
+        seedRepository.save(nextRoundSeed);
         roundRepository.save(nextRound);
         return bracketRepository.save(bracket);
     }
@@ -111,30 +92,46 @@ public class BracketService {
                 .sorted(Comparator.comparingInt(Participant::getGroupRanking))
                 .toList();
 
-        int upperBracketSize = (int) Math.ceil(participants.size() / 2.0);
-        int lowerBracketSize = participants.size() - upperBracketSize;
+        int upperBracketParticipantCount = (int) Math.ceil(participants.size() / 2.0);
+        int lowerBracketParticipantCount = participants.size() - upperBracketParticipantCount;
 
         Bracket bracket = new Bracket(BRACKET_TYPE.WINNERS);
         bracket.setAgeCategory(ageCategoryRepository.findByCategory(ageCategoryId));
         bracketRepository.save(bracket);
 
-        Round firstRound = new Round(bracket, new ArrayList<>());
-        roundRepository.save(firstRound);
+        List<Round> allRounds = new ArrayList<>();
+        for (int i=calculatePerfectParticipantSize(participants.size()) / 2; i>=1; i=i/2) {
+            Round round = new Round(bracket);
+            List<Seed> seeds = new ArrayList<>();
+            for (int j = 0; j < i; j++) {
+//                Collections.nCopies(2, null)
+                seeds.add(new Seed(new ArrayList<>(Arrays.asList(null, null))));
+            }
+            round.setSeeds(seeds);
+            seedRepository.saveAll(seeds);
+            allRounds.add(round);
+        }
 
-        List<Seed> upperSeeds = createSeeds(bracket, firstRound.getId(), upperBracketSize, 0, participants);
-        List<Seed> lowerSeeds = createSeeds(bracket, firstRound.getId(), lowerBracketSize, 1, participants);
+        roundRepository.saveAll(allRounds);
+        Round firstRound = allRounds.get(0);
+        List<Seed> firstRoundSeeds = firstRound.getSeeds();
+        int firstRoundSeedSize = firstRoundSeeds.size();
+
+        List<Seed> upperSeeds = createSeeds(firstRoundSeeds.subList(0, firstRoundSeedSize / 2),
+                upperBracketParticipantCount, 0, participants);
+        List<Seed> lowerSeeds = createSeeds(firstRoundSeeds.subList(firstRoundSeedSize / 2, firstRoundSeedSize),
+                lowerBracketParticipantCount, 1, participants);
 
         List<Seed> seeds = new ArrayList<>(upperSeeds);
         seeds.addAll(lowerSeeds);
         seedRepository.saveAll(seeds);
 
         firstRound.setSeeds(seeds);
-        roundRepository.save(firstRound);
 
-        bracket.setRounds(new ArrayList<>(List.of(firstRound)));
+        bracket.setRounds(allRounds);
         for (Seed seed : firstRound.getSeeds()) {
             List<Participant> seedParticipants = seed.getParticipants();
-            if (seedParticipants.size() == 1) {
+            if (seedParticipants.contains(null)) {
                 advanceToNextRound(seedParticipants.get(0).getId(), bracket.getId(), firstRound.getId());
             }
         }
@@ -142,20 +139,18 @@ public class BracketService {
         return bracketRepository.save(bracket);
     }
 
-    private List<Seed> createSeeds(Bracket bracket, long roundId, int bracketSize,
+    private List<Seed> createSeeds(List<Seed> seeds, int participantCount,
                                    int startingIndex, List<Participant> participants) {
-        int perfectParticipantSize = calculatePerfectParticipantSize(bracketSize);
-        int numOfSeeds = perfectParticipantSize / 2;
-        int numOfByes = perfectParticipantSize - bracketSize;
+        int perfectParticipantSize = calculatePerfectParticipantSize(participantCount);
+        int numOfByes = perfectParticipantSize - participantCount;
 
-        List<Seed> seeds = new ArrayList<>(Collections.nCopies(numOfSeeds, null));
         calculateByes(seeds, numOfByes, startingIndex, participants);
 
         // TODO geri kalan boşluk nasıl doldurulcak?
         int currIndex = startingIndex == 0 ? 0 : 3;
         for (int i=0; i<seeds.size(); i++) {
-            Seed seed = new Seed();
-            if (seeds.get(i) == null) {
+            Seed seed = seeds.get(i);
+            if (isSeedEmpty(seed)) {
                 // if upper bracket and the first group winner
                 if (startingIndex == 0 && currIndex == 0) {
                     seed.setParticipants(new ArrayList<>(
@@ -222,7 +217,7 @@ public class BracketService {
         int seedIndex = startingIndex == 0 ? 0 : seeds.size() - 1;
         for (int i=0; i<numOfByes; i++) {
             Participant byeParticipant = participants.get(currIndex);
-            seeds.set(seedIndex, new Seed(new ArrayList<>(List.of(byeParticipant))));
+            seeds.set(seedIndex, new Seed(new ArrayList<>(Arrays.asList(byeParticipant, null))));
 
             if (currIndex == 0) {
                 seedIndex = seeds.size() - 1;
@@ -238,8 +233,49 @@ public class BracketService {
         }
     }
 
+    private SeedResult calculateSeedInfo(List<Seed> seeds, Participant participant) {
+        int nextRoundSeedIndex = 0;
+        boolean isLowerSeed = false;
+
+        for (int i = 0; i < seeds.size(); i++) {
+            if (seeds.get(i).getParticipants().contains(participant)) {
+                double actualResult = i / 2.0;
+                nextRoundSeedIndex = (int) Math.floor(actualResult);
+                if (actualResult - nextRoundSeedIndex > 0) {
+                    isLowerSeed = true;
+                }
+                break;
+            }
+        }
+
+        return new SeedResult(nextRoundSeedIndex, isLowerSeed);
+    }
+
     private int calculatePerfectParticipantSize(int n) {
         int power = (int) Math.ceil(Math.log(n) / Math.log(2));
         return (int) Math.pow(2, power);
     }
+
+    private boolean isSeedEmpty(Seed seed) {
+        return seed.getParticipants().stream().allMatch(Objects::isNull);
+    }
+
+    private class SeedResult {
+        private final int nextRoundSeedIndex;
+        private final boolean isLowerSeed;
+
+        public SeedResult(int nextRoundSeedIndex, boolean isLowerSeed) {
+            this.nextRoundSeedIndex = nextRoundSeedIndex;
+            this.isLowerSeed = isLowerSeed;
+        }
+
+        public int getNextRoundSeedIndex() {
+            return nextRoundSeedIndex;
+        }
+
+        public boolean isLowerSeed() {
+            return isLowerSeed;
+        }
+    }
+
 }
