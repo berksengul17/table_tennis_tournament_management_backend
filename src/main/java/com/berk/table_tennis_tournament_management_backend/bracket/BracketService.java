@@ -1,5 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend.bracket;
 
+import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
+import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
@@ -22,12 +24,18 @@ public class BracketService {
     private final RoundRepository roundRepository;
     private final SeedRepository seedRepository;
 
-    public Bracket getWinnersBracket(int ageCategory) {
-        return bracketRepository.findByAgeCategory_CategoryAndBracketType(ageCategory, BRACKET_TYPE.WINNERS);
+    public Bracket getWinnersBracket(int category, int age) {
+        return bracketRepository.findByAgeCategory_CategoryAndAgeCategory_AgeAndBracketType(
+                AGE_CATEGORY.valueOf(category),
+                AGE.valueOf(age),
+                BRACKET_TYPE.WINNERS);
     }
 
-    public Bracket getLosersBracket(int ageCategory) {
-        return bracketRepository.findByAgeCategory_CategoryAndBracketType(ageCategory, BRACKET_TYPE.LOSERS);
+    public Bracket getLosersBracket(int category, int age) {
+        return bracketRepository.findByAgeCategory_CategoryAndAgeCategory_AgeAndBracketType(
+                AGE_CATEGORY.valueOf(category),
+                AGE.valueOf(age),
+                BRACKET_TYPE.LOSERS);
     }
 
 //        List<Round> rounds = bracket.getRounds();
@@ -83,8 +91,12 @@ public class BracketService {
         return bracketRepository.save(bracket);
     }
 
-    public Bracket createWinnersBracket(int ageCategoryId) {
-        List<Participant> participants = participantRepository.findAllByAgeCategory_Category(ageCategoryId)
+    public Bracket createWinnersBracket(int categoryVal, int ageVal) {
+        AGE_CATEGORY category = AGE_CATEGORY.valueOf(categoryVal);
+        AGE age = AGE.valueOf(ageVal);
+
+        List<Participant> participants = participantRepository
+                .findAllByAgeCategory_CategoryAndAgeCategory_Age(category, age)
                 .stream()
                 .filter(participant -> participant.getGroupRanking() == 1
                         || participant.getGroupRanking() == 2)
@@ -96,7 +108,7 @@ public class BracketService {
         int lowerBracketParticipantCount = participants.size() - upperBracketParticipantCount;
 
         Bracket bracket = new Bracket(BRACKET_TYPE.WINNERS);
-        bracket.setAgeCategory(ageCategoryRepository.findByCategory(ageCategoryId));
+        bracket.setAgeCategory(ageCategoryRepository.findByAgeAndCategory(age, category));
         bracketRepository.save(bracket);
 
         List<Round> allRounds = new ArrayList<>();

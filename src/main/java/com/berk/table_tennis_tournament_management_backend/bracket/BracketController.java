@@ -1,6 +1,5 @@
 package com.berk.table_tennis_tournament_management_backend.bracket;
 
-import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -11,14 +10,19 @@ public class BracketController {
 
     private final BracketService bracketService;
 
-    @GetMapping("/get-winners-bracket/{ageCategory}")
-    public Bracket getWinnersBracket(@PathVariable int ageCategory) {
-        return bracketService.getWinnersBracket(ageCategory);
+    @GetMapping("/get-winners-bracket/{category}/{age}")
+    public Bracket getWinnersBracket(@PathVariable int category, @PathVariable int age) {
+        return bracketService.getWinnersBracket(category, age);
     }
 
-    @PostMapping("/create-winners-bracket/{ageCategory}")
-    public Bracket createWinnersBracket(@PathVariable int ageCategory) {
-        return bracketService.createWinnersBracket(ageCategory);
+    @GetMapping("/get-losers-bracket/{category}/{age}")
+    public Bracket getLosersBracket(@PathVariable int category, @PathVariable int age) {
+        return bracketService.getLosersBracket(category, age);
+    }
+
+    @PostMapping("/create-winners-bracket/{category}/{age}")
+    public Bracket createWinnersBracket(@PathVariable int category, @PathVariable int age) {
+        return bracketService.createWinnersBracket(category, age);
     }
 
     @PutMapping("/advance-to-next-round")

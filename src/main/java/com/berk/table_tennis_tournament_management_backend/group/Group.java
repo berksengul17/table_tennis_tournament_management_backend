@@ -1,5 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.group;
 
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,12 +18,13 @@ public class Group {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private int ageCategory;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private AgeCategory ageCategory;
     // TODO: burda cascade i çıkarınca niye düzeldi araştır
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "group")
     private List<Participant> participants;
 
-    public Group(int ageCategory, List<Participant> participants) {
+    public Group(AgeCategory ageCategory, List<Participant> participants) {
         this.ageCategory = ageCategory;
         this.participants = participants;
     }

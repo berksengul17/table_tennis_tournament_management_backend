@@ -1,9 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.age_category;
 
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,5 +22,15 @@ public class AgeCategoryController {
     @GetMapping("/load-categories")
     public List<AgeCategory> loadAgeCategories() {
         return ageCategoryService.loadAgeCategories();
+    }
+
+    @GetMapping("/get-categories")
+    public List<String> getCategories() {
+        return ageCategoryService.getCategories();
+    }
+
+    @GetMapping("/get-age-list")
+    public List<String> getAgeListByCategory(@RequestParam int category) {
+        return ageCategoryService.getAgeListByCategory(category);
     }
 }

@@ -1,5 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
+import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
+import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import lombok.AllArgsConstructor;
@@ -69,7 +71,9 @@ public class ParticipantService {
 
     public Participant register(ParticipantDTO participantDTO) {
         Participant participant = new Participant(participantDTO);
-        participant.setAgeCategory(ageCategoryRepository.findByCategory(participantDTO.getAgeCategory()));
+        participant.setAgeCategory(
+                ageCategoryRepository.findByAgeAndCategory(AGE.valueOf(participantDTO.getAge()),
+                        AGE_CATEGORY.valueOf(participantDTO.getCategory())));
         return participantRepository.save(participant);
     }
 

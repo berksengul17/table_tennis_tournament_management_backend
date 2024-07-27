@@ -19,12 +19,20 @@ public class AgeCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(unique = true)
-    private int category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AGE_CATEGORY category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AGE age;
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.LAZY, mappedBy = "ageCategory")
     private List<Participant> participants;
 
-    public AgeCategory(int category) {
+    public AgeCategory(AGE_CATEGORY category, AGE age) {
         this.category = category;
+        this.age = age;
     }
 }

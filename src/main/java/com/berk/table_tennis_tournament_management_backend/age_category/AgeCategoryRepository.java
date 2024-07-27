@@ -5,5 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AgeCategoryRepository extends JpaRepository<AgeCategory, Long> {
-    AgeCategory findByCategory(int ageCategory);
+    AgeCategory findByAgeAndCategory(AGE age,  AGE_CATEGORY category);
 }

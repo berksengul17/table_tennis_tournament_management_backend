@@ -14,6 +14,7 @@ public class ParticipantDTO {
     private String phoneNumber;
     private String gender;
     private LocalDate birthDate;
-    private int ageCategory;
+    private int category;
+    private int age;
     private String city;
 }

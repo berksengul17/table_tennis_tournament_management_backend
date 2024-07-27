@@ -1,5 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend;
 
+import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
+import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
@@ -39,9 +41,7 @@ public class DataInitializer implements CommandLineRunner {
         String[] lastNames = {"Ceylan", "Yılmaz", "Demir", "Kaya", "Şahin", "Çelik", "Arslan", "Öztürk", "Koç", "Acar"};
         String[] cities = {"İzmir", "Ankara", "İstanbul", "Bursa", "Antalya", "Konya", "Adana", "Gaziantep", "Mersin", "Eskişehir"};
         String[] genders = {"Kadın", "Erkek"};
-        List<AgeCategory> ageCategories = List.of(new AgeCategory(0), new AgeCategory(1),
-                                        new AgeCategory(2), new AgeCategory(3),
-                                        new AgeCategory(4));
+        List<AgeCategory> ageCategories = createAllValidAgeCategoryCombinations();
 
         ageCategoryRepository.saveAll(ageCategories);
 
@@ -53,7 +53,7 @@ public class DataInitializer implements CommandLineRunner {
             participant.setPhoneNumber(String.format("%03d %03d %02d %02d", random.nextInt(1000), random.nextInt(1000), random.nextInt(100), random.nextInt(100)));
             participant.setGender(genders[random.nextInt(genders.length)]);
             participant.setBirthDate(LocalDate.now().minusYears(random.nextInt(50) + 18));
-            participant.setAgeCategory(ageCategories.get(random.nextInt(5)));
+            participant.setAgeCategory(ageCategories.get(random.nextInt(5))); // random.nextInt(5)
             participant.setCity(cities[random.nextInt(cities.length)]);
             participant.setRating((random.nextInt(201) + 100) * 10);
 
@@ -61,5 +61,18 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         return participants;
+    }
+
+    private List<AgeCategory> createAllValidAgeCategoryCombinations() {
+        List<AgeCategory> ageCategories = new ArrayList<>();
+
+        for (AGE_CATEGORY ageCategory : AGE_CATEGORY.values()) {
+            for (AGE age : ageCategory.ageList) {
+                AgeCategory newCategory = new AgeCategory(ageCategory, age);
+                ageCategories.add(newCategory);
+            }
+        }
+
+        return ageCategories;
     }
 }

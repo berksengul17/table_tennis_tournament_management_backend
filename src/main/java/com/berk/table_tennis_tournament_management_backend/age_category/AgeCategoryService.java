@@ -5,7 +5,9 @@ import com.berk.table_tennis_tournament_management_backend.participant.Participa
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
+import java.sql.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
@@ -27,17 +29,25 @@ public class AgeCategoryService {
         if (!ageCategories.isEmpty()) {
             return ageCategories;
         }
+
         List<Participant> participants = participantService.getParticipants();
 
         for (Participant participant : participants) {
+            AGE_CATEGORY category = participant.getAgeCategory().getCategory();
+            AGE age = participant.getAgeCategory().getAge();
+
+            // Validate if the participant's age is valid for the category
+            if (!category.ageList.contains(age)) {
+                throw new IllegalArgumentException("Invalid age " + age + " for category " + category);
+            }
+
             AgeCategory existingCategory = ageCategories.stream()
-                    .filter(ageCategory -> ageCategory.getCategory() == participant.getAgeCategory().getCategory())
+                    .filter(ageCategory -> ageCategory.getCategory() == category && ageCategory.getAge() == age)
                     .findFirst()
                     .orElse(null);
 
             if (existingCategory == null) {
-                AgeCategory newCategory = new AgeCategory();
-                newCategory.setCategory(participant.getAgeCategory().getCategory());
+                AgeCategory newCategory = new AgeCategory(category, age);
                 newCategory.setParticipants(new ArrayList<>());
                 newCategory.getParticipants().add(participant);
                 ageCategories.add(newCategory);
@@ -53,4 +63,17 @@ public class AgeCategoryService {
         return ageCategoryRepository.findAll();
     }
 
+    public List<String> getCategories() {
+        return Arrays.stream(AGE_CATEGORY.values())
+                .map(category -> category.label)
+                .toList();
+    }
+
+    public List<String> getAgeListByCategory(int category) {
+        return AGE_CATEGORY
+                .valueOf(category)
+                .ageList.stream()
+                .map(age -> age.age)
+                .toList();
+    }
 }

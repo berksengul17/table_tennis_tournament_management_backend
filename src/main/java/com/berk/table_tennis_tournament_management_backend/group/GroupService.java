@@ -1,5 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend.group;
 
+import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
+import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
@@ -25,9 +27,10 @@ public class GroupService {
     }
 
     @Transactional
-    public List<Group> createGroupsForAgeCategory(int ageCategoryVal) {
+    public List<Group> createGroupsForAgeCategory(int category, int age) {
         List<Group> groups = new ArrayList<>();
-        AgeCategory ageCategory = ageCategoryRepository.findByCategory(ageCategoryVal);
+        AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(AGE.valueOf(category),
+                                                                            AGE_CATEGORY.valueOf(age));
         if (ageCategory == null) {
             return groups;
         }
@@ -45,7 +48,7 @@ public class GroupService {
 
         // Initialize the groups
         for (int i = 0; i < numOfGroups; i++) {
-            groups.add(new Group(ageCategoryVal, new ArrayList<>()));
+            groups.add(new Group(ageCategory, new ArrayList<>()));
         }
 
         // Distribute participants in a round-robin fashion
@@ -64,8 +67,10 @@ public class GroupService {
         return savedGroups;
     }
 
-    public List<Group> loadGroupsForAgeCategory(int ageCategory) {
-        return groupRepository.findByAgeCategory(ageCategory);
+    public List<Group> loadGroupsForAgeCategory(int category, int age) {
+        return groupRepository.findByAgeCategory_CategoryAndAgeCategory_Age(
+                AGE_CATEGORY.valueOf(category),
+                AGE.valueOf(age));
     }
 
     public List<Group> loadAllGroups() {
