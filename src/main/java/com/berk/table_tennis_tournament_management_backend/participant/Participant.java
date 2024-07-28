@@ -25,12 +25,12 @@ public class Participant {
     private String lastName;
     private String email;
     private String phoneNumber;
-    private String gender;
+    private GENDER gender;
     private LocalDate birthDate;
-    @ManyToOne
-    @JoinColumn(name="age_category_id", nullable=false)
-    @JsonIgnoreProperties("participants")
-    private AgeCategory ageCategory;
+//    @ManyToOne
+//    @JoinColumn(name="age_category_id", nullable=false)
+//    @JsonIgnoreProperties("participants")
+//    private AgeCategory ageCategory;
     @ManyToOne
     @JoinColumn(name = "group_id")
     @JsonIgnore
@@ -44,7 +44,7 @@ public class Participant {
         this.lastName = participantDTO.getLastName();
         this.email = participantDTO.getEmail();
         this.phoneNumber = participantDTO.getPhoneNumber();
-        this.gender = participantDTO.getGender();
+        this.gender = GENDER.valueOf(participantDTO.getGender());
         this.birthDate = participantDTO.getBirthDate();
         this.city = participantDTO.getCity();
     }

@@ -14,10 +14,10 @@ public class AgeCategoryController {
         this.ageCategoryService = ageCategoryService;
     }
 
-    @PostMapping("/create-categories")
-    public List<AgeCategory> createAgeCategories() {
-        return ageCategoryService.createAgeCategories();
-    }
+//    @PostMapping("/create-categories")
+//    public List<AgeCategory> createAgeCategories() {
+//        return ageCategoryService.createAgeCategories();
+//    }
 
     @GetMapping("/load-categories")
     public List<AgeCategory> loadAgeCategories() {
@@ -30,7 +30,7 @@ public class AgeCategoryController {
     }
 
     @GetMapping("/get-age-list")
-    public List<String> getAgeListByCategory(@RequestParam int category) {
-        return ageCategoryService.getAgeListByCategory(category);
+    public List<String> getAgeListByCategory(@RequestParam int gender, @RequestParam int category) {
+        return ageCategoryService.getAgeListByCategory(gender, category);
     }
 }

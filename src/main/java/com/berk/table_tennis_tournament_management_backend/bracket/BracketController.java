@@ -20,10 +20,10 @@ public class BracketController {
         return bracketService.getLosersBracket(category, age);
     }
 
-    @PostMapping("/create-winners-bracket/{category}/{age}")
-    public Bracket createWinnersBracket(@PathVariable int category, @PathVariable int age) {
-        return bracketService.createWinnersBracket(category, age);
-    }
+//    @PostMapping("/create-winners-bracket/{category}/{age}")
+//    public Bracket createWinnersBracket(@PathVariable int category, @PathVariable int age) {
+//        return bracketService.createWinnersBracket(category, age);
+//    }
 
     @PutMapping("/advance-to-next-round")
     public Bracket advanceToNextRound(@RequestParam Long participantId,

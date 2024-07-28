@@ -1,5 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.age_category;
 
+import com.berk.table_tennis_tournament_management_backend.participant.GENDER;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantService;
 import jakarta.transaction.Transactional;
@@ -22,42 +23,42 @@ public class AgeCategoryService {
         this.participantService = participantService;
     }
 
-    @Transactional
-    public List<AgeCategory> createAgeCategories() {
-        List<AgeCategory> ageCategories = loadAgeCategories();
-
-        if (!ageCategories.isEmpty()) {
-            return ageCategories;
-        }
-
-        List<Participant> participants = participantService.getParticipants();
-
-        for (Participant participant : participants) {
-            AGE_CATEGORY category = participant.getAgeCategory().getCategory();
-            AGE age = participant.getAgeCategory().getAge();
-
-            // Validate if the participant's age is valid for the category
-            if (!category.ageList.contains(age)) {
-                throw new IllegalArgumentException("Invalid age " + age + " for category " + category);
-            }
-
-            AgeCategory existingCategory = ageCategories.stream()
-                    .filter(ageCategory -> ageCategory.getCategory() == category && ageCategory.getAge() == age)
-                    .findFirst()
-                    .orElse(null);
-
-            if (existingCategory == null) {
-                AgeCategory newCategory = new AgeCategory(category, age);
-                newCategory.setParticipants(new ArrayList<>());
-                newCategory.getParticipants().add(participant);
-                ageCategories.add(newCategory);
-            } else {
-                existingCategory.getParticipants().add(participant);
-            }
-        }
-
-        return ageCategoryRepository.saveAll(ageCategories);
-    }
+//    @Transactional
+//    public List<AgeCategory> createAgeCategories() {
+//        List<AgeCategory> ageCategories = loadAgeCategories();
+//
+//        if (!ageCategories.isEmpty()) {
+//            return ageCategories;
+//        }
+//
+//        List<Participant> participants = participantService.getParticipants();
+//
+//        for (Participant participant : participants) {
+//            AGE_CATEGORY category = participant.getAgeCategory().getCategory();
+//            AGE age = participant.getAgeCategory().getAge();
+//
+//            // Validate if the participant's age is valid for the category
+//            if (!category.ageList.contains(age)) {
+//                throw new IllegalArgumentException("Invalid age " + age + " for category " + category);
+//            }
+//
+//            AgeCategory existingCategory = ageCategories.stream()
+//                    .filter(ageCategory -> ageCategory.getCategory() == category && ageCategory.getAge() == age)
+//                    .findFirst()
+//                    .orElse(null);
+//
+//            if (existingCategory == null) {
+//                AgeCategory newCategory = new AgeCategory(category, age);
+//                newCategory.setParticipants(new ArrayList<>());
+//                newCategory.getParticipants().add(participant);
+//                ageCategories.add(newCategory);
+//            } else {
+//                existingCategory.getParticipants().add(participant);
+//            }
+//        }
+//
+//        return ageCategoryRepository.saveAll(ageCategories);
+//    }
 
     public List<AgeCategory> loadAgeCategories() {
         return ageCategoryRepository.findAll();
@@ -69,11 +70,15 @@ public class AgeCategoryService {
                 .toList();
     }
 
-    public List<String> getAgeListByCategory(int category) {
-        return AGE_CATEGORY
-                .valueOf(category)
-                .ageList.stream()
-                .map(age -> age.age)
+    public List<String> getAgeListByCategory(int gender, int category) {
+        List<AGE_CATEGORY> categories = GENDER.valueOf(gender) == GENDER.MALE ?
+                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
+
+        return categories
+                .get(category)
+                .ageList
+                .stream()
+                .map(a -> a.age)
                 .toList();
     }
 }

@@ -12,8 +12,9 @@ public class ParticipantDTO {
     private String lastName;
     private String email;
     private String phoneNumber;
-    private String gender;
+    private int gender;
     private LocalDate birthDate;
+    private String pairName;
     private int category;
     private int age;
     private String city;

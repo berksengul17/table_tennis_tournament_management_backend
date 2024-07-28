@@ -16,10 +16,10 @@ public class GroupController {
         this.groupService = groupService;
     }
 
-    @PostMapping("/create/{category}/{age}")
-    public List<Group> createGroups(@PathVariable int category, @PathVariable int age) {
-        return groupService.createGroupsForAgeCategory(category, age);
-    }
+//    @PostMapping("/create/{category}/{age}")
+//    public List<Group> createGroups(@PathVariable int category, @PathVariable int age) {
+//        return groupService.createGroupsForAgeCategory(category, age);
+//    }
 
     @GetMapping("/load/{category}/{age}")
     public List<Group> loadGroupsForAgeCategory(@PathVariable int category, @PathVariable int age) {

@@ -4,6 +4,8 @@ import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
+import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -68,13 +70,24 @@ public class ParticipantService {
 
     private final ParticipantRepository participantRepository;
     private final AgeCategoryRepository ageCategoryRepository;
+    private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
 
     public Participant register(ParticipantDTO participantDTO) {
-        Participant participant = new Participant(participantDTO);
-        participant.setAgeCategory(
-                ageCategoryRepository.findByAgeAndCategory(AGE.valueOf(participantDTO.getAge()),
-                        AGE_CATEGORY.valueOf(participantDTO.getCategory())));
-        return participantRepository.save(participant);
+        Participant participant = participantRepository.save(new Participant(participantDTO));
+
+        GENDER gender = GENDER.valueOf(participantDTO.getGender());
+
+        List<AGE_CATEGORY> categories = gender == GENDER.MALE ?
+                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
+
+        AGE_CATEGORY category = categories.get(participantDTO.getCategory());
+        AGE age = category.ageList.get(participantDTO.getAge());
+        AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
+
+        participantAgeCategoryRepository.save(new ParticipantAgeCategory(ageCategory,
+                                                                        participant,
+                                                                        participantDTO.getPairName()));
+        return participant;
     }
 
     public List<Participant> getParticipants() {

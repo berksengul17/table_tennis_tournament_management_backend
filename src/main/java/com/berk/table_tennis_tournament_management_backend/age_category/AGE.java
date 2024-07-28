@@ -1,6 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend.age_category;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public enum AGE {
     THIRTY_TO_THIRTY_NINE(0, "30-39"),
@@ -26,6 +27,13 @@ public enum AGE {
     public static AGE valueOf(int value) {
         return Arrays.stream(values())
                 .filter(age -> age.value == value)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public static AGE getByAge(String age) {
+        return Arrays.stream(values())
+                .filter(a -> Objects.equals(a.age, age))
                 .findFirst()
                 .orElse(null);
     }

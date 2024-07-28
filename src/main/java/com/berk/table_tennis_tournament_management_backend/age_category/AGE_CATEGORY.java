@@ -46,4 +46,11 @@ public enum AGE_CATEGORY {
                 .findFirst()
                 .orElse(null);
     }
+
+    public static List<AGE_CATEGORY> getMenCategoryList() {
+        return Arrays.asList(SINGLE_MEN, DOUBLE_MEN, MIX);
+    }
+    public static List<AGE_CATEGORY> getWomenCategoryList() {
+        return Arrays.asList(SINGLE_WOMEN, DOUBLE_WOMEN, MIX);
+    }
 }
