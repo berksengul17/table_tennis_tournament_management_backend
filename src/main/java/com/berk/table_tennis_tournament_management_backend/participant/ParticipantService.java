@@ -90,10 +90,6 @@ public class ParticipantService {
         return participant;
     }
 
-    public List<Participant> getParticipants() {
-        return participantRepository.findAll(Sort.by(Sort.Direction.ASC, "id"));
-    }
-
     public List<AgeCategoryWeight> calculateAgeCategoryWeights(Map<Integer, List<Participant>> categorizedParticipants, int totalTables) {
         int totalParticipants = categorizedParticipants.values().stream().mapToInt(List::size).sum();
         List<AgeCategoryWeight> ageCategoryWeights = new ArrayList<>();

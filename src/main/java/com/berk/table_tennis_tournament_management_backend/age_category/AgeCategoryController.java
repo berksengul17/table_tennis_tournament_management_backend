@@ -30,7 +30,8 @@ public class AgeCategoryController {
     }
 
     @GetMapping("/get-age-list")
-    public List<String> getAgeListByCategory(@RequestParam int gender, @RequestParam int category) {
-        return ageCategoryService.getAgeListByCategory(gender, category);
+    public List<String> getAgeListByCategoryAndGender(@RequestParam(defaultValue = "-1") int category,
+                                                      @RequestParam(defaultValue = "-1") int gender) {
+        return ageCategoryService.getAgeListByCategoryAndGender(category, gender);
     }
 }

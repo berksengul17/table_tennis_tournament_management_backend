@@ -47,6 +47,13 @@ public enum AGE_CATEGORY {
                 .orElse(null);
     }
 
+    public static AGE_CATEGORY getByLabel(String label) {
+        return Arrays.stream(values())
+                .filter(category -> category.label.equals(label))
+                .findFirst()
+                .orElse(null);
+    }
+
     public static List<AGE_CATEGORY> getMenCategoryList() {
         return Arrays.asList(SINGLE_MEN, DOUBLE_MEN, MIX);
     }

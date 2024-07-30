@@ -19,11 +19,6 @@ public class ParticipantController {
         return participantService.register(newParticipant);
     }
 
-    @GetMapping("/get-all-participants")
-    public List<Participant> getParticipants() {
-        return participantService.getParticipants();
-    }
-
 //    @GetMapping("/distribute")
 //    public Map<Integer, List<List<Participant>>> distributeParticipantsToTables(@RequestParam int totalTables) {
 //        Map<Integer, List<Participant>> categorizedParticipants = participantService.categorizeParticipants();

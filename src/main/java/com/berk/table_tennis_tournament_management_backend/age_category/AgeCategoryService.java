@@ -70,15 +70,25 @@ public class AgeCategoryService {
                 .toList();
     }
 
-    public List<String> getAgeListByCategory(int gender, int category) {
-        List<AGE_CATEGORY> categories = GENDER.valueOf(gender) == GENDER.MALE ?
-                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
+    public List<String> getAgeListByCategoryAndGender(int category, int gender) {
+        List<AGE_CATEGORY> categories;
 
-        return categories
-                .get(category)
-                .ageList
-                .stream()
-                .map(a -> a.age)
-                .toList();
+        // gender is not provided
+        if (gender == -1) {
+            categories = Arrays.asList(AGE_CATEGORY.values());
+        } else {
+            categories = GENDER.valueOf(gender) == GENDER.MALE ?
+                    AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
+        }
+
+        return category == -1 ?
+                Arrays.stream(AGE.values())
+                        .map(a -> a.age)
+                        .toList() :
+                categories.get(category)
+                        .ageList
+                        .stream()
+                        .map(a -> a.age)
+                        .toList();
     }
 }

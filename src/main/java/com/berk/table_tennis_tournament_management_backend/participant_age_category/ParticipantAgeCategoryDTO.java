@@ -1,4 +1,4 @@
-package com.berk.table_tennis_tournament_management_backend.participant;
+package com.berk.table_tennis_tournament_management_backend.participant_age_category;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,15 +8,18 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class ParticipantDTO {
+@AllArgsConstructor
+public class ParticipantAgeCategoryDTO {
+    private Long id;
     private String firstName;
     private String lastName;
     private String email;
     private String phoneNumber;
-    private int gender;
+    private String gender;
     private LocalDate birthDate;
-    private String pairName;
-    private int category;
-    private int age;
     private String city;
+    private int rating;
+    private String category;
+    private String age;
+    private String pairName;
 }
