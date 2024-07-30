@@ -8,7 +8,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class TableTennisTournamentManagementBackendApplication {
 
 	public static void main(String[] args) {
-		System.out.println(AGE.getByAge("30-39"));
 		SpringApplication.run(TableTennisTournamentManagementBackendApplication.class, args);
 	}
 
