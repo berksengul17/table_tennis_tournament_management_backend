@@ -9,6 +9,10 @@ import com.berk.table_tennis_tournament_management_backend.participant.Participa
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.rating.Rating;
+import com.berk.table_tennis_tournament_management_backend.rating.RatingRepository;
+import com.itextpdf.text.pdf.PdfReader;
+import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import lombok.AllArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -28,6 +32,8 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Component
 @AllArgsConstructor
@@ -36,6 +42,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ParticipantRepository participantRepository;
     private final AgeCategoryRepository ageCategoryRepository;
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
+    private final RatingRepository ratingRepository;
     private final List<DateTimeFormatter> DATE_FORMATTERS = List.of(
             DateTimeFormatter.ofPattern("dd.MM.yyyy"),
             new DateTimeFormatterBuilder()
@@ -51,43 +58,14 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) {
         if (participantRepository.count() == 0) {
-            List<Participant> participants = generateParticipants();
-            participantRepository.saveAll(participants);
-            readExcelFile("/example_participants.xlsx");
+            createAllValidAgeCategoryCombinations();
+            readRatingsFromPdfFile("/ratings.pdf");
+            createParticipantsUsingExcelFile("/example_participants.xlsx");
             System.out.println("Saved participants to the database.");
         }
     }
 
-    private List<Participant> generateParticipants() {
-        List<Participant> participants = new ArrayList<>();
-        Random random = new Random();
-        String[] firstNames = {"Sabriye", "Ali", "Ayşe", "Mehmet", "Fatma", "Mustafa", "Zeynep", "Ahmet", "Elif", "Murat"};
-        String[] lastNames = {"Ceylan", "Yılmaz", "Demir", "Kaya", "Şahin", "Çelik", "Arslan", "Öztürk", "Koç", "Acar"};
-        String[] cities = {"İzmir", "Ankara", "İstanbul", "Bursa", "Antalya", "Konya", "Adana", "Gaziantep", "Mersin", "Eskişehir"};
-        String[] genders = {"Kadın", "Erkek"};
-        List<AgeCategory> ageCategories = createAllValidAgeCategoryCombinations();
-
-        ageCategoryRepository.saveAll(ageCategories);
-
-//        for (int i = 0; i < 128; i++) {
-//            Participant participant = new Participant();
-//            participant.setFirstName(firstNames[random.nextInt(firstNames.length)]);
-//            participant.setLastName(lastNames[random.nextInt(lastNames.length)]);
-//            participant.setEmail("participant" + i + "@example.com");
-//            participant.setPhoneNumber(String.format("%03d %03d %02d %02d", random.nextInt(1000), random.nextInt(1000), random.nextInt(100), random.nextInt(100)));
-//            participant.setGender(genders[random.nextInt(genders.length)]);
-//            participant.setBirthDate(LocalDate.now().minusYears(random.nextInt(50) + 18));
-//            participant.setAgeCategory(ageCategories.get(random.nextInt(5))); // random.nextInt(5)
-//            participant.setCity(cities[random.nextInt(cities.length)]);
-//            participant.setRating((random.nextInt(201) + 100) * 10);
-//
-//            participants.add(participant);
-//        }
-
-        return participants;
-    }
-
-    private List<AgeCategory> createAllValidAgeCategoryCombinations() {
+    private void createAllValidAgeCategoryCombinations() {
         List<AgeCategory> ageCategories = new ArrayList<>();
 
         for (AGE_CATEGORY ageCategory : AGE_CATEGORY.values()) {
@@ -97,10 +75,10 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
 
-        return ageCategories;
+        ageCategoryRepository.saveAll(ageCategories);
     }
 
-    private void readExcelFile(String path) {
+    private void createParticipantsUsingExcelFile(String path) {
         try(InputStream stream = getClass().getResourceAsStream(path)) {
             Workbook workbook = new XSSFWorkbook(stream);
             Sheet sheet = workbook.getSheetAt(0);
@@ -115,8 +93,8 @@ public class DataInitializer implements CommandLineRunner {
                 String fullName = row.getCell(1).getStringCellValue().trim();
                 String[] splitName = fullName.split(" ");
                 String firstName = String.join(
-                        " ", Arrays.copyOfRange(splitName, 0, splitName.length - 1));
-                String lastName = splitName[splitName.length - 1];
+                        " ", Arrays.copyOfRange(splitName, 0, splitName.length - 1)).trim();
+                String lastName = splitName[splitName.length - 1].trim();
 
                 String email = getCellValue(row.getCell(2)).trim();
                 String birthDate = getCellValue(row.getCell(3)).trim();
@@ -135,6 +113,14 @@ public class DataInitializer implements CommandLineRunner {
                 participant.setGender(gender.equals("Erkek") ? GENDER.MALE : GENDER.FEMALE);
                 participant.setCity(city);
                 participant.setPhoneNumber(phoneNumber);
+
+                Rating rating = ratingRepository
+                        .findByParticipantName(
+                                (participant.getFirstName() + " " + participant.getLastName()).toLowerCase());
+
+                if (rating != null) {
+                    participant.setRating(rating.getRating());
+                }
 
                 participantRepository.save(participant);
 
@@ -160,6 +146,58 @@ public class DataInitializer implements CommandLineRunner {
             e.printStackTrace();
         }
     }
+
+    private void readRatingsFromPdfFile(String path) {
+        try {
+            PdfReader reader = new PdfReader(getClass().getResourceAsStream(path));
+
+            List<String[]> pages = new ArrayList<>();
+            for (int i = 1; i <= reader.getNumberOfPages(); i++) {
+                pages.add(PdfTextExtractor.getTextFromPage(reader, i).split("\n"));
+            }
+
+            for (String[] page : pages) {
+                page = Arrays.copyOfRange(page, 4, page.length);
+
+                for (String line : page) {
+                    String[] content = extractNameAndNumber(line);
+                    if (content != null) {
+                        int rating = content[1].equals("#N/A") ? 0 : Integer.parseInt(content[1]);
+                        ratingRepository.save(new Rating(content[0].toLowerCase(), rating));
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String[] extractNameAndNumber(String input) {
+        // Split the input by spaces
+        String[] parts = input.split("\\s+");
+        StringBuilder nameBuilder = new StringBuilder();
+        String number = null;
+
+        // Reassemble the name part and find the first number part or #N/A
+        for (String part : parts) {
+            if (part.matches("\\d+") || part.equals("#N/A")) {
+                number = part;
+                break;
+            } else {
+                // Remove any digits in the name part
+                part = part.replaceAll("\\d", "");
+                nameBuilder.append(part).append(" ");
+            }
+        }
+
+        if (number != null) {
+            String name = nameBuilder.toString().trim();
+            return new String[]{name, number};
+        }
+
+        return null;
+    }
+
 
     private String getCellValue(Cell cell) {
         return switch (cell.getCellType()) {
