@@ -61,6 +61,7 @@ public class DataInitializer implements CommandLineRunner {
             createAllValidAgeCategoryCombinations();
             readRatingsFromPdfFile("/ratings.pdf");
             createParticipantsUsingExcelFile("/example_participants.xlsx");
+//            matchRatings();
             System.out.println("Saved participants to the database.");
         }
     }
@@ -92,9 +93,9 @@ public class DataInitializer implements CommandLineRunner {
                 if (time == null) break;
                 String fullName = row.getCell(1).getStringCellValue().trim();
                 String[] splitName = fullName.split(" ");
-                String firstName = String.join(
-                        " ", Arrays.copyOfRange(splitName, 0, splitName.length - 1)).trim();
-                String lastName = splitName[splitName.length - 1].trim();
+                String firstName = toLowerCaseTurkish(String.join(
+                        " ", Arrays.copyOfRange(splitName, 0, splitName.length - 1)).trim());
+                String lastName = toLowerCaseTurkish(splitName[splitName.length - 1].trim());
 
                 String email = getCellValue(row.getCell(2)).trim();
                 String birthDate = getCellValue(row.getCell(3)).trim();
@@ -116,7 +117,8 @@ public class DataInitializer implements CommandLineRunner {
 
                 Rating rating = ratingRepository
                         .findByParticipantName(
-                                (participant.getFirstName() + " " + participant.getLastName()).toLowerCase());
+                                participant.getFirstName() + " "
+                                        + participant.getLastName());
 
                 if (rating != null) {
                     participant.setRating(rating.getRating());
@@ -163,7 +165,7 @@ public class DataInitializer implements CommandLineRunner {
                     String[] content = extractNameAndNumber(line);
                     if (content != null) {
                         int rating = content[1].equals("#N/A") ? 0 : Integer.parseInt(content[1]);
-                        ratingRepository.save(new Rating(content[0].toLowerCase(), rating));
+                        ratingRepository.save(new Rating(content[0], rating));
                     }
                 }
             }
@@ -172,30 +174,133 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
+    public void matchRatings() {
+        List<Rating> ratings = ratingRepository.findAll();
+//        List<Participant> participants = participantRepository.findAll();
+        for (Rating rating : ratings) {
+            List<String> variations = generateVariations(rating.getParticipantName());
+            for (String variation : variations) {
+                String[] names = variation.split(" ");
+                String firstName = String.join(" ", Arrays.copyOfRange(names, 0, names.length - 1));
+                String lastname = names[names.length - 1];
+                Participant participant = participantRepository.findByFirstNameAndLastName(firstName, lastname);
+                if (participant != null) {
+                    participant.setRating(rating.getRating());
+                    participantRepository.save(participant);
+                    break;
+                }
+            }
+        }
+    }
+
+    private List<String> generateVariations(String input) {
+        List<String> variations = new ArrayList<>();
+        generateVariationsHelper(input, 0, new StringBuilder(), variations);
+        return variations;
+    }
+
+    private void generateVariationsHelper(String input, int index, StringBuilder current, List<String> variations) {
+        if (index == input.length()) {
+            variations.add(current.toString());
+            return;
+        }
+
+        char ch = input.charAt(index);
+        if (ch == 'ü' || ch == 'u') {
+            current.append('ü');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(current.length() - 1);
+
+            current.append('u');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(current.length() - 1);
+        } else if (ch == 'i' || ch == 'ı') {
+            current.append('ı');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(index);
+
+            current.append('i');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(current.length() - 1);
+        } else if (ch == 'ö' || ch == 'o') {
+            current.append('ö');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(index);
+
+            current.append('o');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(current.length() - 1);
+        } else if (ch == 'ğ' || ch == 'g') {
+            current.append('ğ');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(index);
+
+            current.append('g');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(index);
+        } else if (ch == 'ç' || ch == 'c') {
+            current.append('ç');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(index);
+
+            current.append('c');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(index);
+        } else if (ch == 'ş' || ch == 's') {
+            current.append('ş');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(index);
+
+            current.append('s');
+            generateVariationsHelper(input, index + 1, current, variations);
+            current.setLength(index);
+        } else {
+            current.append(Character.toLowerCase(ch));
+            generateVariationsHelper(input, index + 1, current, variations);
+        }
+    }
+
     private String[] extractNameAndNumber(String input) {
         // Split the input by spaces
         String[] parts = input.split("\\s+");
         StringBuilder nameBuilder = new StringBuilder();
-        String number = null;
+        StringBuilder numberBuilder = new StringBuilder();
 
         // Reassemble the name part and find the first number part or #N/A
         for (String part : parts) {
             if (part.matches("\\d+") || part.equals("#N/A")) {
-                number = part;
-                break;
+                numberBuilder.append(part);
             } else {
-                // Remove any digits in the name part
-                part = part.replaceAll("\\d", "");
-                nameBuilder.append(part).append(" ");
+                // Separate digits within the name part and add to numberBuilder
+                for (char ch : part.toCharArray()) {
+                    if (Character.isDigit(ch)) {
+                        numberBuilder.append(ch);
+                    } else {
+                        nameBuilder.append(ch);
+                    }
+                }
+                nameBuilder.append(" ");
+            }
+
+            // Stop if we have at least 4 digits
+            if (numberBuilder.length() >= 4) {
+                break;
             }
         }
 
-        if (number != null) {
-            String name = nameBuilder.toString().trim();
+        if (numberBuilder.length() > 0) {
+            String name = toLowerCaseTurkish(nameBuilder.toString().trim());
+            String number = numberBuilder.toString().substring(0, 4); // Ensure the number is exactly 4 digits
             return new String[]{name, number};
         }
 
         return null;
+    }
+    private String toLowerCaseTurkish(String input) {
+        if (input == null) {
+            return null;
+        }
+        return input.toLowerCase(new Locale("tr", "TR"));
     }
 
 
