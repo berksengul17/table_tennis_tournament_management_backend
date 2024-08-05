@@ -1,5 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.participant_age_category;
 
+import com.berk.table_tennis_tournament_management_backend.ExcelHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
@@ -61,8 +62,9 @@ public class ParticipantAgeCategoryService {
         return participants;
     }
 
+    //TODO excel dosyasını güncelle
     public String updateParticipant(Long id,
-                                                       ParticipantAgeCategoryDTO participantAgeCategoryDTO) {
+                                    ParticipantAgeCategoryDTO participantAgeCategoryDTO) {
         ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
                 .findById(id)
                 .orElse(null);
@@ -82,13 +84,19 @@ public class ParticipantAgeCategoryService {
         participant.setBirthDate(participantAgeCategoryDTO.getBirthDate());
         participant.setCity(participantAgeCategoryDTO.getCity());
         participant.setRating(participantAgeCategoryDTO.getRating());
-        ageCategory.setCategory(AGE_CATEGORY.getByLabel(participantAgeCategoryDTO.getCategory()));
-        ageCategory.setAge(AGE.getByAge(participantAgeCategoryDTO.getAge()));
+        participantAgeCategory.setAgeCategory(
+                ageCategoryRepository.findByAgeAndCategory(
+                        AGE.getByAge(participantAgeCategoryDTO.getAge()),
+                        AGE_CATEGORY.getByLabel(participantAgeCategoryDTO.getCategory())
+                )
+        );
         participantAgeCategory.setPairName(participantAgeCategoryDTO.getPairName());
 
         participantRepository.save(participant);
         ageCategoryRepository.save(ageCategory);
         participantAgeCategoryRepository.save(participantAgeCategory);
+
+        ExcelHelper.editRow(participantAgeCategory, false);
 
         return "Participant age category updated successfully";
     }

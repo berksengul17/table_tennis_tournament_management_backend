@@ -17,14 +17,9 @@ import lombok.AllArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.cglib.core.Local;
 import org.springframework.stereotype.Component;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.time.DateTimeException;
+import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -32,8 +27,6 @@ import java.time.format.DateTimeParseException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Component
 @AllArgsConstructor
@@ -52,7 +45,8 @@ public class DataInitializer implements CommandLineRunner {
                     .toFormatter(),
             DateTimeFormatter.ofPattern("dd/MM/yyyy"),
             DateTimeFormatter.ofPattern("dd MMMM yyyy", new Locale("tr", "TR")),
-            DateTimeFormatter.ofPattern("dd MM yyyy")
+            DateTimeFormatter.ofPattern("dd MM yyyy"),
+            DateTimeFormatter.ofPattern("yyyy-MM-dd")
     );
 
     @Override
@@ -60,7 +54,7 @@ public class DataInitializer implements CommandLineRunner {
         if (participantRepository.count() == 0) {
             createAllValidAgeCategoryCombinations();
             readRatingsFromPdfFile("/ratings.pdf");
-            createParticipantsUsingExcelFile("/example_participants.xlsx");
+            createParticipantsUsingExcelFile("example_participants.xlsx");
 //            matchRatings();
             System.out.println("Saved participants to the database.");
         }
@@ -80,13 +74,23 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void createParticipantsUsingExcelFile(String path) {
-        try(InputStream stream = getClass().getResourceAsStream(path)) {
+        try (InputStream stream = new FileInputStream(path)) {
             Workbook workbook = new XSSFWorkbook(stream);
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.iterator();
             // skip the column name row
             int rowCount = 1;
-            if (rowIterator.hasNext()) rowIterator.next();
+            if (rowIterator.hasNext()) {
+                Row row = rowIterator.next();
+                Cell id = row.createCell(11);
+                id.setCellValue("ID");
+
+                Cell age = row.createCell(12);
+                age.setCellValue("Yaş Grubu");
+
+                Cell rating = row.createCell(13);
+                rating.setCellValue("Puan");
+            }
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
                 Cell time = row.getCell(0);
@@ -102,6 +106,7 @@ public class DataInitializer implements CommandLineRunner {
                 String gender = getCellValue(row.getCell(4)).trim();
                 String city = getCellValue(row.getCell(5)).trim();
                 String phoneNumber = getCellValue(row.getCell(10)).trim();
+
                 Participant participant = new Participant();
                 participant.setEmail(email);
                 participant.setFirstName(firstName);
@@ -139,12 +144,42 @@ public class DataInitializer implements CommandLineRunner {
                             AGE_CATEGORY.SINGLE_WOMEN);
                 }
 
+                Cell age = row.getCell(12);
+                if (age != null) {
+                    String ageVal = getCellValue(age).trim();
+                    if (participantAgeCategory.getAgeCategory() != null) {
+                        participantAgeCategory.setAgeCategory(
+                                ageCategoryRepository.findByAgeAndCategory(
+                                        AGE.getByAge(ageVal),
+                                        participantAgeCategory.getAgeCategory().getCategory()
+                                )
+                        );
+                    }
+                } else {
+                    age = row.createCell(12);
+                    if (participantAgeCategory.getAgeCategory() != null) {
+                        String ageStr = participantAgeCategory.getAgeCategory().getAge().age;
+                        age.setCellValue(ageStr != null ? ageStr : "");
+                    }
+                }
+
                 participantAgeCategoryRepository.save(participantAgeCategory);
                 rowCount++;
+
+                Cell id = row.getCell(11);
+                if (id == null) {
+                    id = row.createCell(11);
+                }
+                id.setCellValue(participant.getId());
+
+                Cell ratingCell = row.createCell(13);
+                ratingCell.setCellValue(participant.getRating());
             }
-        } catch(FileNotFoundException e) {
-            e.printStackTrace();
-        } catch(IOException e) {
+
+            try (OutputStream os = new FileOutputStream(path)) {
+                workbook.write(os);
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
@@ -296,6 +331,7 @@ public class DataInitializer implements CommandLineRunner {
 
         return null;
     }
+
     private String toLowerCaseTurkish(String input) {
         if (input == null) {
             return null;
@@ -354,6 +390,7 @@ public class DataInitializer implements CommandLineRunner {
                 participantAgeCategory
                         .setAgeCategory(ageCategoryRepository
                                 .findByAgeAndCategory(ageEnum, category));
+                break;
             }
         }
     }

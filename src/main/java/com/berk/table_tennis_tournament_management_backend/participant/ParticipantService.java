@@ -1,5 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
+import com.berk.table_tennis_tournament_management_backend.ExcelHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
@@ -10,6 +11,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -73,6 +75,9 @@ public class ParticipantService {
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
 
     public Participant register(ParticipantDTO participantDTO) {
+        if (participantDTO.getBirthDate() == null) {
+            participantDTO.setBirthDate(LocalDate.now());
+        }
         Participant participant = participantRepository.save(new Participant(participantDTO));
 
         GENDER gender = GENDER.valueOf(participantDTO.getGender());
@@ -84,10 +89,32 @@ public class ParticipantService {
         AGE age = category.ageList.get(participantDTO.getAge());
         AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
 
-        participantAgeCategoryRepository.save(new ParticipantAgeCategory(ageCategory,
-                                                                        participant,
-                                                                        participantDTO.getPairName()));
+        ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory(ageCategory,
+                participant,
+                participantDTO.getPairName());
+
+        participantAgeCategoryRepository.save(participantAgeCategory);
+
+        ExcelHelper.editRow(participantAgeCategory, true);
+
         return participant;
+    }
+
+    public void deleteParticipant(Long participantId) {
+        Participant participant = participantRepository.findById(participantId)
+                .orElse(null);
+
+        if (participant == null) {
+            throw new IllegalArgumentException("Participant not found");
+        }
+
+        ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
+                .findByParticipant(participant);
+
+        participantAgeCategoryRepository.delete(participantAgeCategory);
+        participantRepository.delete(participant);
+
+        ExcelHelper.deleteRow(participantId);
     }
 
     public List<AgeCategoryWeight> calculateAgeCategoryWeights(Map<Integer, List<Participant>> categorizedParticipants, int totalTables) {
