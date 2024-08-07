@@ -94,6 +94,8 @@ public class DocumentController {
                 table.setSpacingBefore(10);
                 table.setWidthPercentage(100);
 
+                if (participantAgeCategories.isEmpty()) continue;
+
                 addTableHeader(table, font);
                 addRows(table, participantAgeCategories, font);
 
