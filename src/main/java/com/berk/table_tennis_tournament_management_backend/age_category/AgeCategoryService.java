@@ -64,10 +64,17 @@ public class AgeCategoryService {
         return ageCategoryRepository.findAll();
     }
 
-    public List<String> getCategories() {
-        return Arrays.stream(AGE_CATEGORY.values())
-                .map(category -> category.label)
-                .toList();
+    public List<String> getCategories(boolean showDoubles) {
+        if (showDoubles) {
+            return Arrays.stream(AGE_CATEGORY.values())
+                    .map(category -> category.label)
+                    .toList();
+        } else {
+            return AGE_CATEGORY.getSingleCategories()
+                    .stream()
+                    .map(category -> category.label)
+                    .toList();
+        }
     }
 
     public List<String> getAgeListByCategoryAndGender(int category, int gender) {

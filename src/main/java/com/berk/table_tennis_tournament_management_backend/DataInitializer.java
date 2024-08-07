@@ -54,7 +54,7 @@ public class DataInitializer implements CommandLineRunner {
         if (participantRepository.count() == 0) {
             createAllValidAgeCategoryCombinations();
             readRatingsFromPdfFile("/ratings.pdf");
-            createParticipantsUsingExcelFile("example_participants.xlsx");
+//            createParticipantsUsingExcelFile("example_participants.xlsx");
 //            matchRatings();
             System.out.println("Saved participants to the database.");
         }
@@ -299,37 +299,26 @@ public class DataInitializer implements CommandLineRunner {
         // Split the input by spaces
         String[] parts = input.split("\\s+");
         StringBuilder nameBuilder = new StringBuilder();
-        StringBuilder numberBuilder = new StringBuilder();
+        String number = parts[parts.length - 1];
 
         // Reassemble the name part and find the first number part or #N/A
         for (String part : parts) {
-            if (part.matches("\\d+") || part.equals("#N/A")) {
-                numberBuilder.append(part);
-            } else {
-                // Separate digits within the name part and add to numberBuilder
+            if (!(part.matches("\\d+") || part.equals("#N/A"))) {
                 for (char ch : part.toCharArray()) {
-                    if (Character.isDigit(ch)) {
-                        numberBuilder.append(ch);
-                    } else {
+                    if (!Character.isDigit(ch)) {
                         nameBuilder.append(ch);
                     }
                 }
                 nameBuilder.append(" ");
             }
-
-            // Stop if we have at least 4 digits
-            if (numberBuilder.length() >= 4) {
-                break;
-            }
         }
 
-        if (numberBuilder.length() > 0) {
-            String name = toLowerCaseTurkish(nameBuilder.toString().trim());
-            String number = numberBuilder.toString().substring(0, 4); // Ensure the number is exactly 4 digits
-            return new String[]{name, number};
+        String name = toLowerCaseTurkish(nameBuilder.toString().trim());
+        if (number.equals("#N/A")) {
+            number = "0";
         }
+        return new String[]{name, number};
 
-        return null;
     }
 
     private String toLowerCaseTurkish(String input) {

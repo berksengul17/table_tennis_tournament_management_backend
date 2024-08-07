@@ -20,7 +20,7 @@ public class ParticipantAgeCategoryController {
     }
 
     @PutMapping("/update-participant/{id}")
-    public ResponseEntity<String> updateParticipant(@PathVariable Long id,
+    public ResponseEntity<?> updateParticipant(@PathVariable Long id,
                                             @RequestBody ParticipantAgeCategoryDTO participantAgeCategoryDTO) {
         try {
             return ResponseEntity.ok(participantAgeCategoryService

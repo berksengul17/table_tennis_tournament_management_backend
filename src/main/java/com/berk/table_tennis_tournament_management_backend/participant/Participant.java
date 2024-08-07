@@ -1,5 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
+import com.berk.table_tennis_tournament_management_backend.StringHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.group.Group;
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -47,5 +48,9 @@ public class Participant {
         this.gender = GENDER.valueOf(participantDTO.getGender());
         this.birthDate = participantDTO.getBirthDate();
         this.city = participantDTO.getCity();
+    }
+
+    public String getFullName() {
+        return StringHelper.toLowerCaseTurkish(firstName + " " + lastName);
     }
 }

@@ -6,7 +6,10 @@ import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATE
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
+import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryDTO;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.rating.Rating;
+import com.berk.table_tennis_tournament_management_backend.rating.RatingRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -73,12 +76,40 @@ public class ParticipantService {
     private final ParticipantRepository participantRepository;
     private final AgeCategoryRepository ageCategoryRepository;
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
+    private final RatingRepository ratingRepository;
 
-    public Participant register(ParticipantDTO participantDTO) {
+    public ParticipantAgeCategoryDTO register(ParticipantDTO participantDTO) {
+        if (participantDTO.getFirstName() == null) {
+            participantDTO.setFirstName("");
+        }
+
+        if (participantDTO.getLastName() == null) {
+            participantDTO.setLastName("");
+        }
+
+        if (participantDTO.getEmail() == null) {
+            participantDTO.setEmail("");
+        }
+
+        if (participantDTO.getPhoneNumber() == null) {
+            participantDTO.setPhoneNumber("");
+        }
+
         if (participantDTO.getBirthDate() == null) {
             participantDTO.setBirthDate(LocalDate.now());
         }
+
+        if (participantDTO.getPairName() == null) {
+            participantDTO.setPairName("");
+        }
+
+        if (participantDTO.getCity() == null) {
+            participantDTO.setCity("");
+        }
+
         Participant participant = participantRepository.save(new Participant(participantDTO));
+
+        updateRating(participant);
 
         GENDER gender = GENDER.valueOf(participantDTO.getGender());
 
@@ -95,9 +126,9 @@ public class ParticipantService {
 
         participantAgeCategoryRepository.save(participantAgeCategory);
 
-        ExcelHelper.editRow(participantAgeCategory, true);
+//        ExcelHelper.editRow(participantAgeCategory, true);
 
-        return participant;
+        return new ParticipantAgeCategoryDTO(participantAgeCategory);
     }
 
     public void deleteParticipant(Long participantId) {
@@ -114,7 +145,7 @@ public class ParticipantService {
         participantAgeCategoryRepository.delete(participantAgeCategory);
         participantRepository.delete(participant);
 
-        ExcelHelper.deleteRow(participantId);
+//        ExcelHelper.deleteRow(participantId);
     }
 
     public List<AgeCategoryWeight> calculateAgeCategoryWeights(Map<Integer, List<Participant>> categorizedParticipants, int totalTables) {
@@ -129,6 +160,15 @@ public class ParticipantService {
         }
 
         return ageCategoryWeights;
+    }
+
+    public void updateRating(Participant participant) {
+        String fullName = participant.getFullName();
+        if (fullName != null && !fullName.trim().isEmpty()) {
+            Rating rating = ratingRepository
+                    .findByParticipantName(participant.getFullName());
+            participant.setRating(rating != null ? rating.getRating() : 0);
+        }
     }
 
     public Map<Integer, List<List<Participant>>> distributeParticipantsToTables(Map<Integer, List<Participant>> categorizedParticipants, int totalTables) {

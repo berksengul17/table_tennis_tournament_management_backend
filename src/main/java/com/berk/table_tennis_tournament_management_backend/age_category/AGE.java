@@ -16,7 +16,7 @@ public enum AGE {
     SEVENTY_TO_SEVENTY_FOUR(9, "70-74"),
     SEVENTY_FIVE_PLUS(10, "75+");
 
-    private final int value;
+    public final int value;
     public final String age;
 
     AGE(int value, String age) {

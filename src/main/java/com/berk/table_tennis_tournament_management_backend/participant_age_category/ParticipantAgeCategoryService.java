@@ -1,14 +1,14 @@
 package com.berk.table_tennis_tournament_management_backend.participant_age_category;
 
-import com.berk.table_tennis_tournament_management_backend.ExcelHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.GENDER;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
-import com.berk.table_tennis_tournament_management_backend.participant.ParticipantDTO;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
+import com.berk.table_tennis_tournament_management_backend.participant.ParticipantService;
+import com.berk.table_tennis_tournament_management_backend.rating.RatingRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -23,6 +23,7 @@ public class ParticipantAgeCategoryService {
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
     private final ParticipantRepository participantRepository;
     private final AgeCategoryRepository ageCategoryRepository;
+    private final ParticipantService participantService;
 
     public List<ParticipantAgeCategoryDTO> getParticipantAgeCategory(Integer categoryVal, Integer ageVal) {
         AGE_CATEGORY category = null;
@@ -44,18 +45,18 @@ public class ParticipantAgeCategoryService {
                     (category != null && ageCategory.getCategory() != category) ||
                     (age != null && ageCategory.getAge() != age)) continue;
             participants.add(new ParticipantAgeCategoryDTO(
-                participantAgeCategory.getId(),
-                participant.getFirstName(),
-                participant.getLastName(),
-                participant.getEmail(),
-                participant.getPhoneNumber(),
-                participant.getGender().label,
-                participant.getBirthDate(),
-                participant.getCity(),
-                participant.getRating(),
-                ageCategory.getCategory().label,
-                ageCategory.getAge().age,
-                participantAgeCategory.getPairName()
+                    participantAgeCategory.getId(),
+                    participant.getFirstName(),
+                    participant.getLastName(),
+                    participant.getEmail(),
+                    participant.getPhoneNumber(),
+                    participant.getGender().label,
+                    participant.getBirthDate(),
+                    participant.getCity(),
+                    participant.getRating(),
+                    ageCategory.getCategory().label,
+                    ageCategory.getAge().age,
+                    participantAgeCategory.getPairName()
             ));
         }
 
@@ -63,8 +64,8 @@ public class ParticipantAgeCategoryService {
     }
 
     //TODO excel dosyasını güncelle
-    public String updateParticipant(Long id,
-                                    ParticipantAgeCategoryDTO participantAgeCategoryDTO) {
+    public ParticipantAgeCategoryDTO updateParticipant(Long id,
+                                                       ParticipantAgeCategoryDTO participantAgeCategoryDTO) {
         ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
                 .findById(id)
                 .orElse(null);
@@ -72,32 +73,68 @@ public class ParticipantAgeCategoryService {
         if (participantAgeCategory == null) {
             throw new IllegalArgumentException("Participant age category not found");
         }
-        
+
         Participant participant = participantAgeCategory.getParticipant();
         AgeCategory ageCategory = participantAgeCategory.getAgeCategory();
 
-        participant.setFirstName(participantAgeCategoryDTO.getFirstName());
-        participant.setLastName(participantAgeCategoryDTO.getLastName());
-        participant.setEmail(participantAgeCategoryDTO.getEmail());
-        participant.setPhoneNumber(participantAgeCategoryDTO.getPhoneNumber());
-        participant.setGender(GENDER.getByLabel(participantAgeCategoryDTO.getGender()));
-        participant.setBirthDate(participantAgeCategoryDTO.getBirthDate());
-        participant.setCity(participantAgeCategoryDTO.getCity());
-        participant.setRating(participantAgeCategoryDTO.getRating());
-        participantAgeCategory.setAgeCategory(
-                ageCategoryRepository.findByAgeAndCategory(
-                        AGE.getByAge(participantAgeCategoryDTO.getAge()),
-                        AGE_CATEGORY.getByLabel(participantAgeCategoryDTO.getCategory())
-                )
+        if (participantAgeCategoryDTO.getFirstName() != null) {
+            participant.setFirstName(participantAgeCategoryDTO.getFirstName());
+        }
+
+        if (participantAgeCategoryDTO.getLastName() != null) {
+            participant.setLastName(participantAgeCategoryDTO.getLastName());
+        }
+
+        if (participantAgeCategoryDTO.getEmail() != null) {
+            participant.setEmail(participantAgeCategoryDTO.getEmail());
+        }
+
+        if (participantAgeCategoryDTO.getPhoneNumber() != null) {
+            participant.setPhoneNumber(participantAgeCategoryDTO.getPhoneNumber());
+        }
+
+        if (participantAgeCategoryDTO.getGender() != null) {
+            participant.setGender(GENDER.getByLabel(participantAgeCategoryDTO.getGender()));
+        }
+
+        if (participantAgeCategoryDTO.getBirthDate() != null) {
+            participant.setBirthDate(participantAgeCategoryDTO.getBirthDate());
+        }
+
+        if (participantAgeCategoryDTO.getCity() != null) {
+            participant.setCity(participantAgeCategoryDTO.getCity());
+        }
+
+        if (participantAgeCategoryDTO.getRating() != 0) {
+            participant.setRating(participantAgeCategoryDTO.getRating());
+        } else {
+            participantService.updateRating(participant);
+        }
+
+        AgeCategory DTOAgeCategory = ageCategoryRepository.findByAgeAndCategory(
+                AGE.getByAge(participantAgeCategoryDTO.getAge()),
+                AGE_CATEGORY.getByLabel(participantAgeCategoryDTO.getCategory())
         );
+
+        if (DTOAgeCategory == null) {
+            AGE_CATEGORY category = participant.getGender() == GENDER.MALE ?
+                    AGE_CATEGORY.SINGLE_MEN :
+                    AGE_CATEGORY.SINGLE_WOMEN;
+            AGE age = category.ageList.get(0);
+
+            DTOAgeCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
+        }
+
+        participantAgeCategory.setAgeCategory(DTOAgeCategory);
+
         participantAgeCategory.setPairName(participantAgeCategoryDTO.getPairName());
 
         participantRepository.save(participant);
         ageCategoryRepository.save(ageCategory);
         participantAgeCategoryRepository.save(participantAgeCategory);
 
-        ExcelHelper.editRow(participantAgeCategory, false);
+//        ExcelHelper.editRow(participantAgeCategory, false);
 
-        return "Participant age category updated successfully";
+        return new ParticipantAgeCategoryDTO(participantAgeCategory);
     }
 }

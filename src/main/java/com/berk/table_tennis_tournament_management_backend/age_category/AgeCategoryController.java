@@ -25,8 +25,8 @@ public class AgeCategoryController {
     }
 
     @GetMapping("/get-categories")
-    public List<String> getCategories() {
-        return ageCategoryService.getCategories();
+    public List<String> getCategories(@RequestParam boolean showDoubles) {
+        return ageCategoryService.getCategories(showDoubles);
     }
 
     @GetMapping("/get-age-list")

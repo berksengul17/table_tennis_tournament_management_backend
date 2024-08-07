@@ -1,5 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
+import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,7 +17,7 @@ public class ParticipantController {
     }
 
     @PostMapping("/register")
-    public Participant register(@RequestBody ParticipantDTO newParticipant) {
+    public ParticipantAgeCategoryDTO register(@RequestBody ParticipantDTO newParticipant) {
         return participantService.register(newParticipant);
     }
 

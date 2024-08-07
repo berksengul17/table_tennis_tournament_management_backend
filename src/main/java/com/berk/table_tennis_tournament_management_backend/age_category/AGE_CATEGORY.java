@@ -30,7 +30,7 @@ public enum AGE_CATEGORY {
     MIX(4, "Karışık", new ArrayList<>(Arrays.asList(AGE.THIRTY_TO_FORTY_NINE,
             AGE.FIFTY_PLUS)));
 
-    private final int value;
+    public final int value;
     public final String label;
     public final List<AGE> ageList;
 
@@ -60,4 +60,5 @@ public enum AGE_CATEGORY {
     public static List<AGE_CATEGORY> getWomenCategoryList() {
         return Arrays.asList(SINGLE_WOMEN, DOUBLE_WOMEN, MIX);
     }
+    public static List<AGE_CATEGORY> getSingleCategories() {return Arrays.asList(SINGLE_MEN, SINGLE_WOMEN);}
 }
