@@ -15,10 +15,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 
 /*
 @Service
@@ -113,11 +111,13 @@ public class ParticipantService {
 
         GENDER gender = GENDER.valueOf(participantDTO.getGender());
 
-        List<AGE_CATEGORY> categories = gender == GENDER.MALE ?
-                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
-
-        AGE_CATEGORY category = categories.get(participantDTO.getCategory());
-        AGE age = category.ageList.get(participantDTO.getAge());
+//        List<AGE_CATEGORY> categories = gender == GENDER.MALE ?
+//                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
+//
+//        AGE_CATEGORY category = categories.get(participantDTO.getCategory());
+//        AGE age = category.ageList.get(participantDTO.getAge());
+        AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.SINGLE_MEN : AGE_CATEGORY.SINGLE_WOMEN;
+        AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
         AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
 
         ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory(ageCategory,
@@ -194,5 +194,39 @@ public class ParticipantService {
         }
 
         return tablesDistribution;
+    }
+
+    private AGE calculateAgeCategory(LocalDate birthDate,
+                                      AGE_CATEGORY category) {
+        long age = calculateAge(birthDate);
+        List<AGE> ageList = category.ageList;
+        for (AGE ageEnum : ageList) {
+            List<Integer> ageRange = Arrays.stream(ageEnum.age
+                            .split("-"))
+                    .map(a -> {
+                        if (a.contains("+")) a = a.substring(0, a.indexOf("+"));
+                        return Integer.parseInt(a);
+                    })
+                    .toList();
+
+            if (age >= ageRange.get(0) &&
+                    (ageRange.size() == 1 || age <= ageRange.get(1))) {
+                return ageEnum;
+            }
+        }
+
+        return null;
+    }
+
+    private long calculateAge(LocalDate birthDate) {
+        LocalDate now = LocalDate.now();
+        long yearsBetween = ChronoUnit.YEARS.between(birthDate, now);
+        int monthDifference = now.getMonthValue() - birthDate.getMonthValue();
+
+        if (monthDifference < 0 || (monthDifference == 0 && now.getDayOfMonth() < birthDate.getDayOfMonth())) {
+            yearsBetween--;
+        }
+
+        return yearsBetween;
     }
 }
