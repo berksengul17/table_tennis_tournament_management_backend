@@ -25,18 +25,24 @@ public class LogFilter implements Filter {
         HttpServletRequest httpRequest = (HttpServletRequest) request;
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        StringWriter requestWriter = new StringWriter();
-        StringWriter responseWriter = new StringWriter();
+        if (httpRequest.getRequestURI().contains("/get-participants")) {
+            chain.doFilter(request, response);
+            return;
+        }
+
+        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(httpRequest);
+        ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(httpResponse);
+
+        // Process the request and response
+        chain.doFilter(wrappedRequest, wrappedResponse);
 
         // Capture request body
-        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(httpRequest);
-        chain.doFilter(wrappedRequest, response);
         String requestBody = new String(wrappedRequest.getContentAsByteArray());
 
         // Capture response body
-        ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(httpResponse);
-        chain.doFilter(request, wrappedResponse);
         String responseBody = new String(wrappedResponse.getContentAsByteArray());
+
+        // Copy the response body to the real response
         wrappedResponse.copyBodyToResponse();
 
         // Log the request and response details

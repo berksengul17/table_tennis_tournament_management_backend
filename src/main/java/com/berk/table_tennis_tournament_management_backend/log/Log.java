@@ -1,9 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.log;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -21,8 +18,11 @@ public class Log {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String method;
+    @Column(columnDefinition="text")
     private String uri;
+    @Column(columnDefinition="text")
     private String requestBody;
+    @Column(columnDefinition="text")
     private String responseBody;
     private int responseStatus;
     private LocalDateTime timestamp;
