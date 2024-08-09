@@ -1,5 +1,6 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
+import com.berk.table_tennis_tournament_management_backend.CSVHelper;
 import com.berk.table_tennis_tournament_management_backend.ExcelHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
@@ -111,13 +112,13 @@ public class ParticipantService {
 
         GENDER gender = GENDER.valueOf(participantDTO.getGender());
 
-//        List<AGE_CATEGORY> categories = gender == GENDER.MALE ?
-//                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
-//
-//        AGE_CATEGORY category = categories.get(participantDTO.getCategory());
-//        AGE age = category.ageList.get(participantDTO.getAge());
-        AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.SINGLE_MEN : AGE_CATEGORY.SINGLE_WOMEN;
-        AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
+        List<AGE_CATEGORY> categories = gender == GENDER.MALE ?
+                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
+
+        AGE_CATEGORY category = categories.get(participantDTO.getCategory());
+        AGE age = category.ageList.get(participantDTO.getAge());
+//        AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.SINGLE_MEN : AGE_CATEGORY.SINGLE_WOMEN;
+//        AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
         AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
 
         ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory(ageCategory,
@@ -126,6 +127,7 @@ public class ParticipantService {
 
         participantAgeCategoryRepository.save(participantAgeCategory);
 
+        CSVHelper.addLine(participantAgeCategory);
 //        ExcelHelper.editRow(participantAgeCategory, true);
 
         return new ParticipantAgeCategoryDTO(participantAgeCategory);
@@ -145,6 +147,7 @@ public class ParticipantService {
         participantAgeCategoryRepository.delete(participantAgeCategory);
         participantRepository.delete(participant);
 
+        CSVHelper.deleteLine(participantId);
 //        ExcelHelper.deleteRow(participantId);
     }
 
@@ -220,13 +223,6 @@ public class ParticipantService {
 
     private long calculateAge(LocalDate birthDate) {
         LocalDate now = LocalDate.now();
-        long yearsBetween = ChronoUnit.YEARS.between(birthDate, now);
-        int monthDifference = now.getMonthValue() - birthDate.getMonthValue();
-
-        if (monthDifference < 0 || (monthDifference == 0 && now.getDayOfMonth() < birthDate.getDayOfMonth())) {
-            yearsBetween--;
-        }
-
-        return yearsBetween;
+        return ChronoUnit.YEARS.between(birthDate, now);
     }
 }

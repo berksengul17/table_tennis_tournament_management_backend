@@ -54,6 +54,7 @@ public class DataInitializer implements CommandLineRunner {
         if (participantRepository.count() == 0) {
             createAllValidAgeCategoryCombinations();
             readRatingsFromPdfFile("/ratings.pdf");
+            createParticipantsUsingCsvFile();
 //            createParticipantsUsingExcelFile("example_participants.xlsx");
 //            matchRatings();
             System.out.println("Saved participants to the database.");
@@ -71,6 +72,62 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         ageCategoryRepository.saveAll(ageCategories);
+    }
+
+    private void createParticipantsUsingCsvFile() {
+        List<String[]> data = CSVHelper.readFile();
+
+        for (String[] line : data) {
+            String fullName = line[0].trim();
+            String[] splitName = fullName.split(" ");
+            String firstName = toLowerCaseTurkish(String.join(
+                    " ", Arrays.copyOfRange(splitName, 0, splitName.length - 1)).trim());
+            String lastName = toLowerCaseTurkish(splitName[splitName.length - 1].trim());
+            String email = line[1].trim();
+            String birthDate = line[2].trim();
+            String gender = line[3].trim();
+            String city = line[4].trim();
+            String phone = line[5].trim();
+            String age = line[7].trim();
+            String rating = line[8].trim();
+
+            if (age.isEmpty()) continue;
+
+            Participant participant = new Participant();
+            participant.setFirstName(firstName);
+            participant.setLastName(lastName);
+            participant.setEmail(email);
+            LocalDate parsedDate = parseDate(birthDate);
+            if (parsedDate == null) {
+                parsedDate = parseDate("17.04.1962");
+            }
+            participant.setBirthDate(parsedDate);
+            participant.setGender(GENDER.getByLabel(gender));
+            participant.setCity(city);
+            participant.setPhoneNumber(phone);
+            participant.setRating(Integer.parseInt(rating));
+
+            participantRepository.save(participant);
+
+            line[6] = participant.getId().toString();
+
+            ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory();
+            participantAgeCategory.setParticipant(participant);
+            participantAgeCategory.setPairName("");
+
+            AGE ageEnum = AGE.getByAge(age);
+            AGE_CATEGORY category = participant.getGender() == GENDER.MALE ?
+                    AGE_CATEGORY.SINGLE_MEN :
+                    AGE_CATEGORY.SINGLE_WOMEN;
+
+            participantAgeCategory
+                    .setAgeCategory(ageCategoryRepository
+                            .findByAgeAndCategory(ageEnum, category));
+
+            participantAgeCategoryRepository.save(participantAgeCategory);
+        }
+
+        CSVHelper.createDataCsv(data);
     }
 
     private void createParticipantsUsingExcelFile(String path) {
@@ -328,7 +385,6 @@ public class DataInitializer implements CommandLineRunner {
         return input.toLowerCase(new Locale("tr", "TR"));
     }
 
-
     private String getCellValue(Cell cell) {
         return switch (cell.getCellType()) {
             case STRING -> cell.getStringCellValue();
@@ -350,14 +406,7 @@ public class DataInitializer implements CommandLineRunner {
 
     private long calculateAge(LocalDate birthDate) {
         LocalDate now = LocalDate.now();
-        long yearsBetween = ChronoUnit.YEARS.between(birthDate, now);
-        int monthDifference = now.getMonthValue() - birthDate.getMonthValue();
-
-        if (monthDifference < 0 || (monthDifference == 0 && now.getDayOfMonth() < birthDate.getDayOfMonth())) {
-            yearsBetween--;
-        }
-
-        return yearsBetween;
+        return ChronoUnit.YEARS.between(birthDate, now);
     }
 
     private void calculateAgeCategory(ParticipantAgeCategory participantAgeCategory,
