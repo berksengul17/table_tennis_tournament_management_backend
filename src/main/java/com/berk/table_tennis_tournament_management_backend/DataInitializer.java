@@ -51,14 +51,14 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        if (participantRepository.count() == 0) {
-            createAllValidAgeCategoryCombinations();
-            readRatingsFromPdfFile("/ratings.pdf");
-            createParticipantsUsingCsvFile();
-//            createParticipantsUsingExcelFile("example_participants.xlsx");
-//            matchRatings();
-            System.out.println("Saved participants to the database.");
-        }
+//        if (participantRepository.count() == 0) {
+//            createAllValidAgeCategoryCombinations();
+//            readRatingsFromPdfFile("/ratings.pdf");
+//            createParticipantsUsingCsvFile();
+////            createParticipantsUsingExcelFile("example_participants.xlsx");
+////            matchRatings();
+//            System.out.println("Saved participants to the database.");
+//        }
     }
 
     private void createAllValidAgeCategoryCombinations() {
