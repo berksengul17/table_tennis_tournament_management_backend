@@ -28,6 +28,7 @@ public class ParticipantAgeCategoryDTO {
     private String category;
     private String age;
     private String pairName;
+    private String hotel;
 
     public ParticipantAgeCategoryDTO(ParticipantAgeCategory participantAgeCategory) {
         Participant participant = participantAgeCategory.getParticipant();

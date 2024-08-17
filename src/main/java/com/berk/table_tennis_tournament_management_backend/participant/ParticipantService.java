@@ -5,6 +5,7 @@ import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.hotel.HotelRepository;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryDTO;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
@@ -74,6 +75,7 @@ public class ParticipantService {
     private final ParticipantRepository participantRepository;
     private final AgeCategoryRepository ageCategoryRepository;
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
+    private HotelRepository hotelRepository;
     private final RatingRepository ratingRepository;
 
     public ParticipantAgeCategoryDTO register(ParticipantDTO participantDTO) {
@@ -106,6 +108,9 @@ public class ParticipantService {
         }
 
         Participant participant = participantRepository.save(new Participant(participantDTO));
+        participant.setHotel(hotelRepository.
+                findById(participantDTO.getHotel() + 1)
+                .orElse(null));
 
         updateRating(participant);
 

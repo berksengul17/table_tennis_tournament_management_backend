@@ -19,4 +19,5 @@ public class ParticipantDTO {
     private int category;
     private int age;
     private String city;
+    private long hotel;
 }

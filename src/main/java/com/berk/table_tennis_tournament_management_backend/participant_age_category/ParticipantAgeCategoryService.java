@@ -56,7 +56,8 @@ public class ParticipantAgeCategoryService {
                     participant.getRating(),
                     ageCategory.getCategory().label,
                     ageCategory.getAge().age,
-                    participantAgeCategory.getPairName()
+                    participantAgeCategory.getPairName(),
+                    participant.getHotel().getName()
             ));
         }
 
