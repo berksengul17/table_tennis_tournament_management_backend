@@ -57,7 +57,7 @@ public class ParticipantAgeCategoryService {
                     ageCategory.getCategory().label,
                     ageCategory.getAge().age,
                     participantAgeCategory.getPairName(),
-                    participant.getHotel().getName()
+                    participant.getHotel() != null ? participant.getHotel().getName() : ""
             ));
         }
 
