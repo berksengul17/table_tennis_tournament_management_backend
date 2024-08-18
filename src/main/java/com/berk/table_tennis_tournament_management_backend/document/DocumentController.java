@@ -62,5 +62,26 @@ public class DocumentController {
         }
     }
 
+    @GetMapping("/download-group-table-time/{category}/{age}")
+    public ResponseEntity<?> downloadGroupTableTimePdf(@PathVariable int category,
+                                               @PathVariable int age) {
+        try {
+            byte[] eligibleStudentsPdf = documentService.createGroupTableTimePdf(category, age);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(
+                    ContentDisposition.builder("attachment")
+                            .filename("grup_masa_saatler.pdf")
+                            .build());
+            return new ResponseEntity<>(eligibleStudentsPdf, headers, HttpStatus.OK);
+        } catch (DocumentException e ) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Document error:" + e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error while creating file:" + e.getMessage());
+        }
+    }
+
 
 }

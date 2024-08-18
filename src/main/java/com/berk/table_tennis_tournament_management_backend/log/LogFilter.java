@@ -26,8 +26,9 @@ public class LogFilter implements Filter {
         HttpServletResponse httpResponse = (HttpServletResponse) response;
 
         if (httpRequest.getRequestURI().contains("/get-participants") ||
-        httpRequest.getRequestURI().contains("/download-age-categories") ||
-                httpRequest.getRequestURI().contains("/download-groups")) {
+            httpRequest.getRequestURI().contains("/download-age-categories") ||
+            httpRequest.getRequestURI().contains("/download-groups") ||
+            httpRequest.getRequestURI().contains("/download-group-table-time")) {
             chain.doFilter(request, response);
             return;
         }

@@ -6,10 +6,14 @@ import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATE
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.group.Group;
 import com.berk.table_tennis_tournament_management_backend.group.GroupRepository;
+import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTime;
+import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTimeRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.table.Table;
+import com.berk.table_tennis_tournament_management_backend.time.Time;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
@@ -33,6 +37,7 @@ public class DocumentService {
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
     private final AgeCategoryRepository ageCategoryRepository;
     private final GroupRepository groupRepository;
+    private final GroupTableTimeRepository groupTableTimeRepository;
 
     public byte[] createAgeCategoriesPdf() throws IOException, DocumentException {
         Document document = new Document();
@@ -119,27 +124,238 @@ public class DocumentService {
         List<Group> groups = groupRepository
                 .findByAgeCategory_CategoryAndAgeCategory_Age(categoryEnum, ageEnum);
 
-        Paragraph para = new Paragraph(categoryEnum.label + " " + ageEnum.age + ":",
-                new Font(baseFont, 16));
+        Paragraph para = new Paragraph(categoryEnum.label + " " + ageEnum.age,
+                new Font(baseFont, 24));
+        para.setAlignment(Element.ALIGN_CENTER);
 
+        document.add(para);
 
-
-        for (Group group : groups) {
+        for (int i=0; i<groups.size(); i++) {
             PdfPTable table = new PdfPTable(2);
             table.setSpacingAfter(10);
             table.setSpacingBefore(10);
             addTableHeaderGroup(table, font);
-            List<Participant> participants = group.getParticipants();
+            List<Participant> participants = groups.get(i).getParticipants();
             participants.sort(new ParticipantComparator());
             addRowsGroup(document, table, participants, font);
-            document.add(para);
-            document.add(table);
+            Paragraph titleAndTable = new Paragraph();
+            titleAndTable.setKeepTogether(true);
+            // Create and add the title
+            Paragraph title = new Paragraph("Grup " + getGroupCode(categoryEnum, ageEnum) + (i + 1) + ":",
+                    new Font(baseFont, 16));
+            title.setKeepTogether(true);
+            titleAndTable.add(title);
+
+            // Add the table to the wrapper
+            table.setKeepTogether(true);
+            titleAndTable.add(table);
+
+            // Add the wrapper to the document
+            document.add(titleAndTable);
         }
 
         document.close();
 
         return byteArrayOutputStream.toByteArray();
     }
+
+    public byte[] createGroupTableTimePdf(int category, int age) throws IOException, DocumentException {
+        Document document = new Document();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        PdfWriter.getInstance(document, byteArrayOutputStream);
+
+        ClassPathResource resource = new ClassPathResource("static/OpenSans-Regular.ttf");
+        BaseFont baseFont = null;
+        try (InputStream inputStream = resource.getInputStream()) {
+            baseFont = BaseFont.createFont(
+                    "OpenSans-Regular.ttf",
+                    BaseFont.IDENTITY_H,
+                    BaseFont.EMBEDDED,
+                    false,
+                    inputStream.readAllBytes(),
+                    null
+            );
+            // Use the baseFont as needed
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Font font = new Font(baseFont, 12);
+
+        document.open();
+
+        AGE_CATEGORY categoryEnum = AGE_CATEGORY.valueOf(category);
+        AGE ageEnum = categoryEnum.ageList.get(age);
+
+        List<Group> groups = groupRepository
+                .findByAgeCategory_CategoryAndAgeCategory_Age(categoryEnum, ageEnum);
+
+        Paragraph para = new Paragraph(categoryEnum.label + " " + ageEnum.age,
+                new Font(baseFont, 24));
+        para.setAlignment(Element.ALIGN_CENTER);
+
+        document.add(para);
+
+        for (int i=0; i<groups.size(); i++) {
+            PdfPTable table = new PdfPTable(9);
+            table.setWidths(new float[] { 8, 1, 1, 1, 1, 1, 1, 1, 1 });
+            Group group = groups.get(i);
+            List<Participant> participants = group.getParticipants();
+            participants.sort(new ParticipantComparator());
+            addTableHeaderGroupTableTime(table,
+                    font,
+                    groupTableTimeRepository.findByGroup(group),
+                    i + 1
+                    );
+            addRowsGroupTableTime(table, participants, font);
+            Paragraph titleAndTable = new Paragraph();
+            titleAndTable.setSpacingAfter(10);
+            titleAndTable.setSpacingBefore(10);
+            titleAndTable.setKeepTogether(true);
+            // Create and add the title
+            Paragraph title = new Paragraph("Grup " + getGroupCode(categoryEnum, ageEnum) + (i + 1) + ":",
+                    new Font(baseFont, 16));
+            title.setKeepTogether(true);
+            titleAndTable.add(title);
+
+            // Add the table to the wrapper
+            table.setKeepTogether(true);
+            titleAndTable.add(table);
+
+            // Add the wrapper to the document
+            document.add(titleAndTable);
+        }
+
+        document.close();
+
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private void addRowsGroupTableTime(PdfPTable table, List<Participant> participants, Font font) {
+        int participantCount = participants.size();
+
+        for (int i = 0; i < 4; i++) {  // Loop over the maximum number of participants (4)
+            if (i < participantCount) {
+                Participant participant = participants.get(i);
+                String[] names = (participant.getFirstName() + " " + participant.getLastName()).split(" ");
+                String fullName = String.join(" ",
+                        Arrays.stream(names)
+                                .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
+                                        name.substring(1)).toList());
+
+                PdfPCell nameCell = new PdfPCell(new Phrase(fullName, font));
+                table.addCell(nameCell);
+
+                for (int j = 0; j < 4; j++) {
+                    PdfPCell cell;
+                    if (i == j) {
+                        cell = new PdfPCell();
+                        cell.setBackgroundColor(BaseColor.BLACK); // This shades the diagonal cells
+                    } else if (j < participantCount) {
+                        String result = "0-0"; // Replace this with actual result data
+                        cell = new PdfPCell(new Phrase(result, font));
+                        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    } else {
+                        cell = new PdfPCell(new Phrase("-", font));
+                        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    }
+                    table.addCell(cell);
+                }
+
+                // Adding G, M, P, S columns
+                PdfPCell gCell = new PdfPCell(new Phrase("0", font)); // Replace with actual data
+                gCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(gCell);
+
+                PdfPCell mCell = new PdfPCell(new Phrase("0", font)); // Replace with actual data
+                mCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(mCell);
+
+                PdfPCell pCell = new PdfPCell(new Phrase("0", font)); // Replace with actual data
+                pCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(pCell);
+
+                PdfPCell sCell = new PdfPCell(new Phrase("0", font)); // Replace with actual data
+                sCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(sCell);
+
+            } else {
+                // Add empty row with "-" for participants and match results
+                PdfPCell emptyNameCell = new PdfPCell(new Phrase("-", font));
+                emptyNameCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                table.addCell(emptyNameCell);
+
+                for (int j = 0; j < 4; j++) {
+                    PdfPCell emptyCell;
+                    if (i == j) {
+                        emptyCell = new PdfPCell();
+                        emptyCell.setBackgroundColor(BaseColor.BLACK); // Black cell for "4-4" position
+                    } else {
+                        emptyCell = new PdfPCell(new Phrase("-", font));
+                        emptyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    }
+                    table.addCell(emptyCell);
+                }
+
+                // Empty G, M, P, S columns
+                for (int k = 0; k < 4; k++) {
+                    PdfPCell emptyStatCell = new PdfPCell(new Phrase("0", font));
+                    emptyStatCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    table.addCell(emptyStatCell);
+                }
+            }
+        }
+    }
+
+    private void addTableHeaderGroupTableTime(PdfPTable table,
+                                          Font font,
+                                          GroupTableTime groupTableTime,
+                                          int groupOrder) {
+        Time time = groupTableTime.getTableTime().getTime();
+        Table groupTable = groupTableTime.getTableTime().getTable();
+        String title = "Grup " + groupOrder +
+                "    " + time.getStartTime() + "-" + time.getEndTime() + "    " +
+                groupTable.getName();
+
+        Stream.of( title, "1", "2", "3", "4", "G", "M", "P", "S")
+                .forEach(columnTitle -> {
+                    PdfPCell header = new PdfPCell();
+                    header.setBorder(Rectangle.NO_BORDER);
+                    header.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    header.setPhrase(new Phrase(columnTitle, font));
+                    table.addCell(header);
+                });
+    }
+
+
+//    private void addRowsGroupTableTime(Document document, PdfPTable table, List<Participant> participants, Font font) {
+//        for (Participant participant : participants) {
+//            String[] names = (participant.getFirstName() + " " + participant.getLastName()).split(" ");
+//            String fullName = String.join(" ",
+//                    Arrays.stream(names)
+//                            .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
+//                                    name.substring(1)).toList());
+//            table.addCell(new Phrase(fullName, font));
+//        }
+//    }
+//
+//    private void addTableHeaderGroupTableTime(PdfPTable table,
+//                                          Font font,
+//                                          GroupTableTime groupTableTime,
+//                                          int groupOrder) {
+//        Time time = groupTableTime.getTableTime().getTime();
+//        Table groupTable = groupTableTime.getTableTime().getTable();
+//        String title = "Grup " + groupOrder +
+//                time.getStartTime() + " " + time.getEndTime() + " " +
+//                groupTable.getName();
+//        Stream.of(title, "1", "2", "3", "4", "G", "M", "P", "S")
+//                .forEach(columnTitle -> {
+//                    PdfPCell header = new PdfPCell();
+//                    header.setBorder(Rectangle.NO_BORDER);
+//                    header.setPhrase(new Phrase(columnTitle, font));
+//                    table.addCell(header);
+//                });
+//    }
 
     private void addTableHeader(PdfPTable table, Font font) {
         Stream.of("Sıra No.", "Ad-Soyad", "E-mail", "Cinsiyet", "Doğum Tarihi",
@@ -203,6 +419,36 @@ public class DocumentService {
         }
         document.add(new Phrase("\n"));
 
+    }
+
+    private String getGroupCode(AGE_CATEGORY category, AGE age) {
+        if (category == AGE_CATEGORY.SINGLE_MEN) {
+            switch(age) {
+                case FIFTY_TO_FIFTY_NINE:
+                    return "A";
+                case FORTY_TO_FORTY_NINE:
+                    return "B";
+                case SIXTY_TO_SIXTY_FOUR:
+                    return "C";
+                case THIRTY_TO_THIRTY_NINE:
+                    return "D";
+                case SEVENTY_TO_SEVENTY_FOUR:
+                    return "E";
+                case SIXTY_FIVE_TO_SIXTY_NINE:
+                    return "F";
+            }
+        } else if (category == AGE_CATEGORY.SINGLE_WOMEN) {
+            switch(age) {
+                case THIRTY_TO_FORTY_NINE:
+                    return "G";
+                case FIFTY_TO_FIFTY_NINE:
+                    return "H";
+                case SIXTY_PLUS:
+                    return "J";
+            }
+        }
+
+        return "";
     }
 
 }

@@ -122,7 +122,7 @@ public class GroupService {
 
     }
 
-    private long findTheBiggestAgeCategory() {
+    public AgeCategory findTheBiggestAgeCategory() {
         AgeCategory theBiggestAgeCategory = null;
         int maxNumOfGroups = 0;
         for (AGE_CATEGORY category : AGE_CATEGORY.values()) {
@@ -135,8 +135,7 @@ public class GroupService {
             }
         }
 
-        assert theBiggestAgeCategory != null;
-        return theBiggestAgeCategory.getId();
+        return theBiggestAgeCategory;
     }
 
     private void sortGroupParticipants(List<Group> groups) {

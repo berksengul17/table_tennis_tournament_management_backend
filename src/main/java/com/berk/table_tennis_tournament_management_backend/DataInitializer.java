@@ -11,16 +11,26 @@ import com.berk.table_tennis_tournament_management_backend.participant_age_categ
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.rating.Rating;
 import com.berk.table_tennis_tournament_management_backend.rating.RatingRepository;
+import com.berk.table_tennis_tournament_management_backend.table.Table;
+import com.berk.table_tennis_tournament_management_backend.table.TableRepository;
+import com.berk.table_tennis_tournament_management_backend.table_time.TableTime;
+import com.berk.table_tennis_tournament_management_backend.table_time.TableTimeRepository;
+import com.berk.table_tennis_tournament_management_backend.time.Time;
+import com.berk.table_tennis_tournament_management_backend.time.TimeRepository;
 import com.itextpdf.text.pdf.PdfReader;
 import com.itextpdf.text.pdf.parser.PdfTextExtractor;
 import lombok.AllArgsConstructor;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
@@ -36,6 +46,9 @@ public class DataInitializer implements CommandLineRunner {
     private final AgeCategoryRepository ageCategoryRepository;
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
     private final RatingRepository ratingRepository;
+    private final TimeRepository timeRepository;
+    private final TableRepository tableRepository;
+    private final TableTimeRepository tableTimeRepository;
     private final List<DateTimeFormatter> DATE_FORMATTERS = List.of(
             DateTimeFormatter.ofPattern("dd.MM.yyyy"),
             new DateTimeFormatterBuilder()
@@ -51,14 +64,42 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-//        if (participantRepository.count() == 0) {
-//            createAllValidAgeCategoryCombinations();
-//            readRatingsFromPdfFile("/ratings.pdf");
-//            createParticipantsUsingCsvFile();
-////            createParticipantsUsingExcelFile("example_participants.xlsx");
-////            matchRatings();
-//            System.out.println("Saved participants to the database.");
+//        initializeTimeData();
+//        initializeTableData();
+//        initializeTableTimeData();
+    }
+
+    private void initializeTimeData() {
+        LocalTime startTime = LocalTime.of(10, 0);
+        LocalTime endTime = LocalTime.of(19, 0);
+
+        timeRepository.saveAll(List.of(
+                new Time(LocalTime.of(10, 0), LocalTime.of(12, 0)),
+                new Time(LocalTime.of(13, 0), LocalTime.of(15, 0)),
+                new Time(LocalTime.of(15, 0), LocalTime.of(17, 0)),
+                new Time(LocalTime.of(17, 0), LocalTime.of(19, 0))));
+//        while (startTime.isBefore(endTime)) {
+//            timeRepository.save(
+//                    new Time(startTime,
+//                            startTime.plusHours(2)));
+//            startTime = startTime.plusHours(2);
 //        }
+    }
+
+    private void initializeTableData() {
+        int NUM_OF_TABLES = 16;
+
+        for (int i = 0; i < NUM_OF_TABLES; i++) {
+            tableRepository.save(new Table("Masa " + (i + 1)));
+        }
+    }
+
+    private void initializeTableTimeData() {
+        for (Time time : timeRepository.findAll()) {
+            for (Table table : tableRepository.findAll()) {
+                tableTimeRepository.save(new TableTime(table, time, true));
+            }
+        }
     }
 
     private void createAllValidAgeCategoryCombinations() {

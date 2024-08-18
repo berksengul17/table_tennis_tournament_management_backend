@@ -8,6 +8,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalTime;
+
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,5 +18,11 @@ public class Time {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String timeRange;
+    private LocalTime startTime;
+    private LocalTime endTime;
+
+    public Time(LocalTime startTime, LocalTime endTime) {
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
 }
