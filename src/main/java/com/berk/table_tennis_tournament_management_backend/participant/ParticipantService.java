@@ -6,6 +6,8 @@ import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.match.Match;
+import com.berk.table_tennis_tournament_management_backend.match.MatchRepository;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryDTO;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
@@ -76,6 +78,7 @@ public class ParticipantService {
     private final AgeCategoryRepository ageCategoryRepository;
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
     private final RatingRepository ratingRepository;
+    private final MatchRepository matchRepository;
 
     public ParticipantAgeCategoryDTO register(ParticipantDTO participantDTO) {
         if (participantDTO.getFirstName() == null) {
@@ -143,6 +146,10 @@ public class ParticipantService {
 
         ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
                 .findByParticipant(participant);
+        List<Match> matches = matchRepository.findAllByParticipant(participant);
+
+        // delete all matches where the participant is involved
+        matchRepository.deleteAllById(matches.stream().map(Match::getId).toList());
 
         participantAgeCategoryRepository.delete(participantAgeCategory);
         participantRepository.delete(participant);

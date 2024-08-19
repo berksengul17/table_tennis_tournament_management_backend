@@ -8,7 +8,6 @@ import com.berk.table_tennis_tournament_management_backend.table_time.TableTimeR
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service

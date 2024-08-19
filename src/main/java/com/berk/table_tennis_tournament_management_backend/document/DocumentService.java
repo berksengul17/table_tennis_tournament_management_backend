@@ -8,6 +8,8 @@ import com.berk.table_tennis_tournament_management_backend.group.Group;
 import com.berk.table_tennis_tournament_management_backend.group.GroupRepository;
 import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTime;
 import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTimeRepository;
+import com.berk.table_tennis_tournament_management_backend.match.Match;
+import com.berk.table_tennis_tournament_management_backend.match.MatchService;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
@@ -19,6 +21,7 @@ import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import jakarta.servlet.http.Part;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -26,7 +29,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -38,6 +41,7 @@ public class DocumentService {
     private final AgeCategoryRepository ageCategoryRepository;
     private final GroupRepository groupRepository;
     private final GroupTableTimeRepository groupTableTimeRepository;
+    private final MatchService matchService;
 
     public byte[] createAgeCategoriesPdf() throws IOException, DocumentException {
         Document document = new Document();
@@ -243,6 +247,10 @@ public class DocumentService {
                                 .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
                                         name.substring(1)).toList());
 
+                int numOfWins = matchService.calculateNumOfWins(participant);
+                int numOfLoses = matchService.calculateNumOfLoses(participant);
+                int score = matchService.calculateScore(numOfWins, numOfLoses);
+
                 PdfPCell nameCell = new PdfPCell(new Phrase(fullName, font));
                 table.addCell(nameCell);
 
@@ -252,7 +260,11 @@ public class DocumentService {
                         cell = new PdfPCell();
                         cell.setBackgroundColor(BaseColor.BLACK); // This shades the diagonal cells
                     } else if (j < participantCount) {
-                        String result = "0-0"; // Replace this with actual result data
+                        Participant p2 = participants.get(j);
+                        Match match = matchService.getMatchBetweenP1AndP2(participant, p2);
+                        String result;
+                        if (i > j) result = match.getP2Score() + "-" + match.getP1Score();
+                        else result = match.getP1Score() + "-" + match.getP2Score();
                         cell = new PdfPCell(new Phrase(result, font));
                         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
                     } else {
@@ -263,19 +275,29 @@ public class DocumentService {
                 }
 
                 // Adding G, M, P, S columns
-                PdfPCell gCell = new PdfPCell(new Phrase("0", font)); // Replace with actual data
+                PdfPCell gCell = new PdfPCell(new Phrase(String.valueOf(numOfWins), font)); // Replace with actual data
                 gCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(gCell);
 
-                PdfPCell mCell = new PdfPCell(new Phrase("0", font)); // Replace with actual data
+                PdfPCell mCell = new PdfPCell(new Phrase(String.valueOf(numOfLoses), font)); // Replace with actual data
                 mCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(mCell);
 
-                PdfPCell pCell = new PdfPCell(new Phrase("0", font)); // Replace with actual data
+                PdfPCell pCell = new PdfPCell(new Phrase(String.valueOf(score), font)); // Replace with actual data
                 pCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(pCell);
 
-                PdfPCell sCell = new PdfPCell(new Phrase("0", font)); // Replace with actual data
+                // TODO BUNU NEREYE KOYABİLİRİM?
+                List<Participant> groupParticipants = participant.getGroup().getParticipants();
+                List<Integer> scores = new ArrayList<>();
+                for (Participant groupParticipant : groupParticipants) {
+                    scores.add(matchService.calculateScore(groupParticipant));
+                }
+
+                Collections.sort(scores, Collections.reverseOrder());
+                int index = scores.indexOf(score);
+
+                PdfPCell sCell = new PdfPCell(new Phrase(String.valueOf(index + 1), font)); // Replace with actual data
                 sCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(sCell);
 
@@ -326,36 +348,6 @@ public class DocumentService {
                     table.addCell(header);
                 });
     }
-
-
-//    private void addRowsGroupTableTime(Document document, PdfPTable table, List<Participant> participants, Font font) {
-//        for (Participant participant : participants) {
-//            String[] names = (participant.getFirstName() + " " + participant.getLastName()).split(" ");
-//            String fullName = String.join(" ",
-//                    Arrays.stream(names)
-//                            .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
-//                                    name.substring(1)).toList());
-//            table.addCell(new Phrase(fullName, font));
-//        }
-//    }
-//
-//    private void addTableHeaderGroupTableTime(PdfPTable table,
-//                                          Font font,
-//                                          GroupTableTime groupTableTime,
-//                                          int groupOrder) {
-//        Time time = groupTableTime.getTableTime().getTime();
-//        Table groupTable = groupTableTime.getTableTime().getTable();
-//        String title = "Grup " + groupOrder +
-//                time.getStartTime() + " " + time.getEndTime() + " " +
-//                groupTable.getName();
-//        Stream.of(title, "1", "2", "3", "4", "G", "M", "P", "S")
-//                .forEach(columnTitle -> {
-//                    PdfPCell header = new PdfPCell();
-//                    header.setBorder(Rectangle.NO_BORDER);
-//                    header.setPhrase(new Phrase(columnTitle, font));
-//                    table.addCell(header);
-//                });
-//    }
 
     private void addTableHeader(PdfPTable table, Font font) {
         Stream.of("Sıra No.", "Ad-Soyad", "E-mail", "Cinsiyet", "Doğum Tarihi",

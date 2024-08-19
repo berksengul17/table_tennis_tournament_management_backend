@@ -2,10 +2,7 @@ package com.berk.table_tennis_tournament_management_backend.match;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -26,5 +23,10 @@ public class MatchController {
     public List<List<Match>> createMatches(@PathVariable int category,
                                            @PathVariable int age) {
         return matchService.createMatches(category, age);
+    }
+
+    @PostMapping("/save-scores")
+    public void saveScores(@RequestBody Match match) {
+        matchService.saveScores(match);
     }
 }
