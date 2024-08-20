@@ -5,10 +5,7 @@ import com.berk.table_tennis_tournament_management_backend.participant_age_categ
 import com.itextpdf.text.*;
 import lombok.AllArgsConstructor;
 import org.springframework.http.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
@@ -64,9 +61,30 @@ public class DocumentController {
 
     @GetMapping("/download-group-table-time/{category}/{age}")
     public ResponseEntity<?> downloadGroupTableTimePdf(@PathVariable int category,
-                                               @PathVariable int age) {
+                                                       @PathVariable int age,
+                                                       @RequestParam boolean createEmpty) {
         try {
-            byte[] eligibleStudentsPdf = documentService.createGroupTableTimePdf(category, age);
+            byte[] eligibleStudentsPdf = documentService.createGroupTableTimePdf(category, age, createEmpty);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(
+                    ContentDisposition.builder("attachment")
+                            .filename("grup_masa_saatler.pdf")
+                            .build());
+            return new ResponseEntity<>(eligibleStudentsPdf, headers, HttpStatus.OK);
+        } catch (DocumentException e ) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Document error:" + e.getMessage());
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error while creating file:" + e.getMessage());
+        }
+    }
+
+    @GetMapping("/download-all-group-table-time")
+    public ResponseEntity<?> downloadAllGroupTableTimePdf(@RequestParam boolean createEmpty) {
+        try {
+            byte[] eligibleStudentsPdf = documentService.createAllGroupTableTimePdf(createEmpty);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDisposition(

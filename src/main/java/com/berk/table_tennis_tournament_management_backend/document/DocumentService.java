@@ -163,7 +163,8 @@ public class DocumentService {
         return byteArrayOutputStream.toByteArray();
     }
 
-    public byte[] createGroupTableTimePdf(int category, int age) throws IOException, DocumentException {
+    public byte[] createGroupTableTimePdf(int category, int age, boolean createEmpty)
+            throws IOException, DocumentException {
         Document document = new Document();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         PdfWriter.getInstance(document, byteArrayOutputStream);
@@ -211,7 +212,7 @@ public class DocumentService {
                     groupTableTimeRepository.findByGroup(group),
                     i + 1
                     );
-            addRowsGroupTableTime(table, participants, font);
+            addRowsGroupTableTime(table, participants, createEmpty, font);
             Paragraph titleAndTable = new Paragraph();
             titleAndTable.setSpacingAfter(10);
             titleAndTable.setSpacingBefore(10);
@@ -235,7 +236,87 @@ public class DocumentService {
         return byteArrayOutputStream.toByteArray();
     }
 
-    private void addRowsGroupTableTime(PdfPTable table, List<Participant> participants, Font font) {
+    public byte[] createAllGroupTableTimePdf(boolean createEmpty)
+            throws IOException, DocumentException{
+        Document document = new Document();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        PdfWriter.getInstance(document, byteArrayOutputStream);
+
+        ClassPathResource resource = new ClassPathResource("static/OpenSans-Regular.ttf");
+        BaseFont baseFont = null;
+        try (InputStream inputStream = resource.getInputStream()) {
+            baseFont = BaseFont.createFont(
+                    "OpenSans-Regular.ttf",
+                    BaseFont.IDENTITY_H,
+                    BaseFont.EMBEDDED,
+                    false,
+                    inputStream.readAllBytes(),
+                    null
+            );
+            // Use the baseFont as needed
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Font font = new Font(baseFont, 12);
+
+        document.open();
+
+
+        for (AGE_CATEGORY category : AGE_CATEGORY.values()) {
+            for (AGE age : category.ageList) {
+                List<Group> groups = groupRepository
+                        .findByAgeCategory_CategoryAndAgeCategory_Age(category, age);
+
+                if (groups.isEmpty()) continue;
+
+                Paragraph para = new Paragraph(category.label + " " + age.age,
+                        new Font(baseFont, 24));
+                para.setAlignment(Element.ALIGN_CENTER);
+
+                document.add(para);
+
+                for (int i=0; i<groups.size(); i++) {
+                    PdfPTable table = new PdfPTable(9);
+                    table.setWidths(new float[] { 8, 1, 1, 1, 1, 1, 1, 1, 1 });
+                    Group group = groups.get(i);
+                    List<Participant> participants = group.getParticipants();
+                    participants.sort(new ParticipantComparator());
+                    addTableHeaderGroupTableTime(table,
+                            font,
+                            groupTableTimeRepository.findByGroup(group),
+                            i + 1
+                    );
+                    addRowsGroupTableTime(table, participants, createEmpty, font);
+                    Paragraph titleAndTable = new Paragraph();
+                    titleAndTable.setSpacingAfter(10);
+                    titleAndTable.setSpacingBefore(10);
+                    titleAndTable.setKeepTogether(true);
+                    // Create and add the title
+                    Paragraph title = new Paragraph("Grup " + getGroupCode(category, age) + (i + 1) + ":",
+                            new Font(baseFont, 16));
+                    title.setKeepTogether(true);
+                    titleAndTable.add(title);
+
+                    // Add the table to the wrapper
+                    table.setKeepTogether(true);
+                    titleAndTable.add(table);
+
+                    // Add the wrapper to the document
+                    document.add(titleAndTable);
+                }
+            }
+        }
+
+        document.close();
+
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private void addRowsGroupTableTime(PdfPTable table,
+                                       List<Participant> participants,
+                                       boolean createEmpty,
+                                       Font font) {
         int participantCount = participants.size();
 
         for (int i = 0; i < 4; i++) {  // Loop over the maximum number of participants (4)
@@ -247,9 +328,12 @@ public class DocumentService {
                                 .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
                                         name.substring(1)).toList());
 
-                int numOfWins = matchService.calculateNumOfWins(participant);
-                int numOfLoses = matchService.calculateNumOfLoses(participant);
-                int score = matchService.calculateScore(numOfWins, numOfLoses);
+                int numOfWins = 0, numOfLoses = 0, score = 0;
+                if (!createEmpty) {
+                    numOfWins = matchService.calculateNumOfWins(participant);
+                    numOfLoses = matchService.calculateNumOfLoses(participant);
+                    score = matchService.calculateScore(numOfWins, numOfLoses);
+                }
 
                 PdfPCell nameCell = new PdfPCell(new Phrase(fullName, font));
                 table.addCell(nameCell);
@@ -262,9 +346,11 @@ public class DocumentService {
                     } else if (j < participantCount) {
                         Participant p2 = participants.get(j);
                         Match match = matchService.getMatchBetweenP1AndP2(participant, p2);
-                        String result;
-                        if (i > j) result = match.getP2Score() + "-" + match.getP1Score();
-                        else result = match.getP1Score() + "-" + match.getP2Score();
+                        String result = "";
+                        if (!createEmpty) {
+                            if (i > j) result = match.getP2Score() + "-" + match.getP1Score();
+                            else result = match.getP1Score() + "-" + match.getP2Score();
+                        }
                         cell = new PdfPCell(new Phrase(result, font));
                         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
                     } else {
@@ -275,15 +361,21 @@ public class DocumentService {
                 }
 
                 // Adding G, M, P, S columns
-                PdfPCell gCell = new PdfPCell(new Phrase(String.valueOf(numOfWins), font)); // Replace with actual data
+                PdfPCell gCell = new PdfPCell(new Phrase(
+                        createEmpty ? "" : String.valueOf(numOfWins),
+                        font)); // Replace with actual data
                 gCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(gCell);
 
-                PdfPCell mCell = new PdfPCell(new Phrase(String.valueOf(numOfLoses), font)); // Replace with actual data
+                PdfPCell mCell = new PdfPCell(new Phrase(
+                        createEmpty ? "" : String.valueOf(numOfLoses),
+                        font)); // Replace with actual data
                 mCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(mCell);
 
-                PdfPCell pCell = new PdfPCell(new Phrase(String.valueOf(score), font)); // Replace with actual data
+                PdfPCell pCell = new PdfPCell(new Phrase(
+                        createEmpty ? "" : String.valueOf(score),
+                        font)); // Replace with actual data
                 pCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(pCell);
 
@@ -297,7 +389,8 @@ public class DocumentService {
                 Collections.sort(scores, Collections.reverseOrder());
                 int index = scores.indexOf(score);
 
-                PdfPCell sCell = new PdfPCell(new Phrase(String.valueOf(index + 1), font)); // Replace with actual data
+                PdfPCell sCell = new PdfPCell(new Phrase(
+                        createEmpty ? "" : String.valueOf(index + 1), font)); // Replace with actual data
                 sCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                 table.addCell(sCell);
 
@@ -321,7 +414,7 @@ public class DocumentService {
 
                 // Empty G, M, P, S columns
                 for (int k = 0; k < 4; k++) {
-                    PdfPCell emptyStatCell = new PdfPCell(new Phrase("0", font));
+                    PdfPCell emptyStatCell = new PdfPCell(new Phrase("", font));
                     emptyStatCell.setHorizontalAlignment(Element.ALIGN_CENTER);
                     table.addCell(emptyStatCell);
                 }
