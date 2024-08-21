@@ -271,7 +271,7 @@ public class DocumentService {
                 if (groups.isEmpty()) continue;
 
                 Paragraph para = new Paragraph(category.label + " " + age.age,
-                        new Font(baseFont, 24));
+                        new Font(baseFont, 18));
                 para.setAlignment(Element.ALIGN_CENTER);
 
                 document.add(para);
@@ -289,18 +289,33 @@ public class DocumentService {
                     );
                     addRowsGroupTableTime(table, participants, createEmpty, font);
                     Paragraph titleAndTable = new Paragraph();
-                    titleAndTable.setSpacingAfter(10);
-                    titleAndTable.setSpacingBefore(10);
+                    titleAndTable.setSpacingAfter(5);
+                    titleAndTable.setSpacingBefore(5);
                     titleAndTable.setKeepTogether(true);
                     // Create and add the title
                     Paragraph title = new Paragraph("Grup " + getGroupCode(category, age) + (i + 1) + ":",
                             new Font(baseFont, 16));
                     title.setKeepTogether(true);
-                    titleAndTable.add(title);
-
                     // Add the table to the wrapper
                     table.setKeepTogether(true);
+
+                    titleAndTable.add(title);
                     titleAndTable.add(table);
+
+                    List<Match> matches = matchService.getGroupMatches(group);
+                    Paragraph matchTitle = new Paragraph("Maçlar:", new Font(baseFont, 14));
+                    matchTitle.setKeepTogether(true);
+                    titleAndTable.add(matchTitle);
+                    for (Match match : matches) {
+                        String p1Name = StringHelper.upperCaseFirstLetter(match.getP1().getFullName());
+                        String p2Name = StringHelper.upperCaseFirstLetter(match.getP2().getFullName());
+
+                        Paragraph matchPara = new Paragraph(
+                                match.getStartTime() + "-" + match.getEndTime() + ": " +
+                                p1Name + " - " + p2Name, font);
+                        matchPara.setKeepTogether(true);
+                        titleAndTable.add(matchPara);
+                    }
 
                     // Add the wrapper to the document
                     document.add(titleAndTable);

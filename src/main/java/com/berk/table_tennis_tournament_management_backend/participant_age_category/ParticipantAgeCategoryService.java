@@ -2,6 +2,7 @@ package com.berk.table_tennis_tournament_management_backend.participant_age_cate
 
 import com.berk.table_tennis_tournament_management_backend.CSVHelper;
 import com.berk.table_tennis_tournament_management_backend.ExcelHelper;
+import com.berk.table_tennis_tournament_management_backend.StringHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
@@ -80,11 +81,13 @@ public class ParticipantAgeCategoryService {
         AgeCategory ageCategory = participantAgeCategory.getAgeCategory();
 
         if (participantAgeCategoryDTO.getFirstName() != null) {
-            participant.setFirstName(participantAgeCategoryDTO.getFirstName());
+            participant.setFirstName(StringHelper
+                    .toLowerCaseTurkish(participantAgeCategoryDTO.getFirstName()));
         }
 
         if (participantAgeCategoryDTO.getLastName() != null) {
-            participant.setLastName(participantAgeCategoryDTO.getLastName());
+            participant.setLastName(StringHelper
+                    .toLowerCaseTurkish(participantAgeCategoryDTO.getLastName()));
         }
 
         if (participantAgeCategoryDTO.getEmail() != null) {

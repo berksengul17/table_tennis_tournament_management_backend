@@ -118,26 +118,6 @@ public class GroupService {
         return savedGroups;
     }
 
-    public void calculateStartTimesAndTableNamesOfGroups() {
-
-    }
-
-    public AgeCategory findTheBiggestAgeCategory() {
-        AgeCategory theBiggestAgeCategory = null;
-        int maxNumOfGroups = 0;
-        for (AGE_CATEGORY category : AGE_CATEGORY.values()) {
-            for (AGE age : category.ageList) {
-                List<Group> groups = groupRepository.findByAgeCategory_CategoryAndAgeCategory_Age(category, age);
-                if (groups.size() > maxNumOfGroups) {
-                    maxNumOfGroups = groups.size();
-                    theBiggestAgeCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
-                }
-            }
-        }
-
-        return theBiggestAgeCategory;
-    }
-
     private void sortGroupParticipants(List<Group> groups) {
         for (Group group: groups) {
             group.getParticipants().sort(new ParticipantComparator());

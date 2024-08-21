@@ -1,13 +1,16 @@
 package com.berk.table_tennis_tournament_management_backend.group_table_time;
 
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryCount;
 import com.berk.table_tennis_tournament_management_backend.group.Group;
 import com.berk.table_tennis_tournament_management_backend.group.GroupRepository;
 import com.berk.table_tennis_tournament_management_backend.table_time.TableTime;
 import com.berk.table_tennis_tournament_management_backend.table_time.TableTimeRepository;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -45,6 +48,27 @@ public class GroupTableTimeService {
         }
 
         return groupTableTimeList;
+    }
+
+    @Transactional
+    public List<GroupTableTime> saveGroupTableTimes(List<GroupTableTime> groupTableTimeList) {
+        if (groupTableTimeList.isEmpty()) {
+            return groupTableTimeList;
+        }
+
+        List<GroupTableTime> updatedGroupTableTimeList = new ArrayList<>();
+
+        for (GroupTableTime groupTableTime : groupTableTimeList) {
+            GroupTableTime found = groupTableTimeRepository
+                    .findById(groupTableTime.getId())
+                    .orElse(null);
+
+            if (found == null) continue;
+            found.setTableTime(groupTableTime.getTableTime());
+            updatedGroupTableTimeList.add(found);
+        }
+
+        return groupTableTimeRepository.saveAll(updatedGroupTableTimeList);
     }
 
 }

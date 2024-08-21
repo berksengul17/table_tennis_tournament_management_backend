@@ -5,4 +5,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TableTimeRepository extends JpaRepository<TableTime, Long> {
+    TableTime findByTable_IdAndTime_Id(long tableId, long timeId);
 }

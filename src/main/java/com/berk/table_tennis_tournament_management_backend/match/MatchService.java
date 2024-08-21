@@ -8,6 +8,7 @@ import com.berk.table_tennis_tournament_management_backend.group.GroupRepository
 import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTime;
 import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTimeRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
+import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
 import com.berk.table_tennis_tournament_management_backend.table.Table;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,6 +46,10 @@ public class MatchService {
         return matches;
     }
 
+    public List<Match> getGroupMatches(Group group) {
+        return matchRepository.findAllByGroup(group);
+    }
+
     public List<List<Match>> createMatches(int category, int age) {
         AGE_CATEGORY categoryEnum = AGE_CATEGORY.valueOf(category);
         AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(categoryEnum.ageList.get(age),
@@ -58,6 +63,7 @@ public class MatchService {
             Table table = groupTableTime.getTableTime().getTable();
 
             List<Participant> participants = group.getParticipants();
+            participants.sort(new ParticipantComparator());
 
             if (participants.size() == 3) {
                 LocalTime startTime = groupTableTime.getTableTime().getTime().getStartTime();
