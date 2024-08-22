@@ -1,15 +1,17 @@
 package com.berk.table_tennis_tournament_management_backend.group;
 
-import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTime;
+import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTimeRepository;
+import com.berk.table_tennis_tournament_management_backend.match.Match;
+import com.berk.table_tennis_tournament_management_backend.match.MatchRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
-import jakarta.servlet.http.Part;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ public class GroupService {
     private final AgeCategoryRepository ageCategoryRepository;
     private final ParticipantRepository participantRepository;
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
+    private final GroupTableTimeRepository groupTableTimeRepository;
+    private final MatchRepository matchRepository;
     private final GroupRepository groupRepository;
     private final int NUM_OF_TABLES = 16;
 
@@ -56,6 +60,16 @@ public class GroupService {
                 participantRepository.save(participant);
             }
 
+            for (Group group : savedGroups) {
+                GroupTableTime foundGroupTableTime = groupTableTimeRepository.findByGroup(group);
+                List<Match> foundMatches = matchRepository.findAllByGroup(group);
+
+                if (foundGroupTableTime != null)
+                    groupTableTimeRepository.deleteById(foundGroupTableTime.getId());
+                if (!foundMatches.isEmpty())
+                    matchRepository.deleteAllById(foundMatches.stream().map(Match::getId).toList());
+            }
+
             groupRepository.deleteAllById(savedGroups.stream().map(Group::getId).toList());
         }
 
@@ -84,6 +98,13 @@ public class GroupService {
              participants.get(i).setGroup(group);
 
              if (increaseRow) {rowCount ++;}
+        }
+
+        for (Group group : groups) {
+            List<Participant> groupParticipants = group.getParticipants();
+            for (int i = 0; i < groupParticipants.size(); i++) {
+                groupParticipants.get(i).setGroupRanking(i + 1); // Assign ranking starting from 1
+            }
         }
 
         return groupRepository.saveAll(groups);

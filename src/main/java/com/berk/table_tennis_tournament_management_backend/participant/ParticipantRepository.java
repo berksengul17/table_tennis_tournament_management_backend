@@ -9,7 +9,6 @@ import java.util.List;
 
 @Repository
 public interface ParticipantRepository extends JpaRepository<Participant, Long> {
-//    List<Participant> findAllByAgeCategory_CategoryAndAgeCategory_Age(AGE_CATEGORY category, AGE age);
     Participant findByFirstNameAndLastName(String firstName, String lastName);
     List<Participant> findByGender(GENDER gender);
 }

@@ -8,6 +8,7 @@ import com.berk.table_tennis_tournament_management_backend.table_time.TableTime;
 import com.berk.table_tennis_tournament_management_backend.table_time.TableTimeRepository;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,7 +32,8 @@ public class GroupTableTimeService {
 
         for (AgeCategoryCount ageCategoryCount : ageCategoryCounts) {
             List<Group> groups = groupRepository.findAllByAgeCategory(ageCategoryCount.getAgeCategory());
-            List<TableTime> tableTimeList = tableTimeRepository.findAll();
+            List<TableTime> tableTimeList = tableTimeRepository
+                    .findAll(Sort.by(Sort.Direction.ASC, "id"));
             for (Group group : groups) {
                 for (TableTime tableTime : tableTimeList) {
                     if (tableTime.isAvailable()) {

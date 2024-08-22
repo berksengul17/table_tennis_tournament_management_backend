@@ -28,10 +28,6 @@ public class Participant {
     private String phoneNumber;
     private GENDER gender;
     private LocalDate birthDate;
-//    @ManyToOne
-//    @JoinColumn(name="age_category_id", nullable=false)
-//    @JsonIgnoreProperties("participants")
-//    private AgeCategory ageCategory;
     @ManyToOne
     @JoinColumn(name = "group_id")
     @JsonIgnore

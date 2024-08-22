@@ -103,7 +103,7 @@ public class ParticipantService {
         matchRepository.deleteAllById(matches.stream().map(Match::getId).toList());
 
         participantAgeCategoryRepository.delete(participantAgeCategory);
-        participantRepository.delete(participant);
+        participantRepository.deleteById(participant.getId());
 
         CSVHelper.deleteLine(participantId);
 //        ExcelHelper.deleteRow(participantId);

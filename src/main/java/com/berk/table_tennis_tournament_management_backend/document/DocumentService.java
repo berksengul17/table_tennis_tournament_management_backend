@@ -282,9 +282,10 @@ public class DocumentService {
                     Group group = groups.get(i);
                     List<Participant> participants = group.getParticipants();
                     participants.sort(new ParticipantComparator());
+                    GroupTableTime gtt = groupTableTimeRepository.findByGroup(group);
                     addTableHeaderGroupTableTime(table,
                             font,
-                            groupTableTimeRepository.findByGroup(group),
+                            gtt,
                             i + 1
                     );
                     addRowsGroupTableTime(table, participants, createEmpty, font);
@@ -342,6 +343,8 @@ public class DocumentService {
                         Arrays.stream(names)
                                 .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
                                         name.substring(1)).toList());
+                String rating = String.valueOf(participant.getRating());
+                String city = participant.getCity();
 
                 int numOfWins = 0, numOfLoses = 0, score = 0;
                 if (!createEmpty) {
@@ -350,7 +353,8 @@ public class DocumentService {
                     score = matchService.calculateScore(numOfWins, numOfLoses);
                 }
 
-                PdfPCell nameCell = new PdfPCell(new Phrase(fullName, font));
+                PdfPCell nameCell = new PdfPCell(
+                        new Phrase(fullName + "(" + city + ")" + " - " + rating, font));
                 table.addCell(nameCell);
 
                 for (int j = 0; j < 4; j++) {
