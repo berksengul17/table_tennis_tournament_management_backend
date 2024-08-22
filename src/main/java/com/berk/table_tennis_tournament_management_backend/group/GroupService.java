@@ -127,7 +127,20 @@ public class GroupService {
     @Transactional
     public List<Group> saveGroups(List<Group> groups) {
         for (Group group : groups) {
-            for (Participant participant : group.getParticipants()) {
+            List<Participant> participants = group.getParticipants();
+            // delete related group table time
+            GroupTableTime groupTableTime = groupTableTimeRepository.findByGroup(group);
+            // reset related table time as available
+            groupTableTime.getTableTime().setAvailable(true);
+            groupTableTimeRepository.deleteById(
+                    groupTableTime.getId());
+            // delete related matches
+            matchRepository.deleteAllById(
+                    matchRepository.findAllByGroup(group)
+                            .stream().map(Match::getId).toList());
+            for (int i=0; i<participants.size(); i++) {
+                Participant participant = participants.get(i);
+                participant.setGroupRanking(i + 1);
                 participant.setGroup(group);
                 participantRepository.save(participant);  // Save the updated participant
             }

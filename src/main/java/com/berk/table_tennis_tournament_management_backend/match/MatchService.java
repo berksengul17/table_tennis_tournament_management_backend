@@ -50,10 +50,14 @@ public class MatchService {
         return matchRepository.findAllByGroup(group);
     }
 
-    public List<List<Match>> createMatches(int category, int age) {
+    public List<List<Match>> createMatches(int category, int age, boolean refresh) {
         AGE_CATEGORY categoryEnum = AGE_CATEGORY.valueOf(category);
         AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(categoryEnum.ageList.get(age),
                 categoryEnum);
+
+        if (refresh) {
+            matchRepository.deleteAll();
+        }
 
         List<Group> groups = groupRepository.findAllByAgeCategory(ageCategory);
         List<List<Match>> matches = new ArrayList<>();
@@ -63,7 +67,7 @@ public class MatchService {
             Table table = groupTableTime.getTableTime().getTable();
 
             List<Participant> participants = group.getParticipants();
-            participants.sort(new ParticipantComparator());
+            participants.sort((p1, p2) -> p1.getGroupRanking() > p2.getGroupRanking() ? 1 : -1);
 
             if (participants.size() == 3) {
                 LocalTime startTime = groupTableTime.getTableTime().getTime().getStartTime();

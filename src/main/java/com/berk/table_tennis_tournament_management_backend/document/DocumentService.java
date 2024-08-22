@@ -281,7 +281,7 @@ public class DocumentService {
                     table.setWidths(new float[] { 8, 1, 1, 1, 1, 1, 1, 1, 1 });
                     Group group = groups.get(i);
                     List<Participant> participants = group.getParticipants();
-                    participants.sort(new ParticipantComparator());
+                    participants.sort((p1, p2) -> p1.getGroupRanking() > p2.getGroupRanking() ? 1 : -1);
                     GroupTableTime gtt = groupTableTimeRepository.findByGroup(group);
                     addTableHeaderGroupTableTime(table,
                             font,

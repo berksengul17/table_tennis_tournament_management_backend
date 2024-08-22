@@ -21,8 +21,9 @@ public class MatchController {
 
     @GetMapping("/create/{category}/{age}")
     public List<List<Match>> createMatches(@PathVariable int category,
-                                           @PathVariable int age) {
-        return matchService.createMatches(category, age);
+                                           @PathVariable int age,
+                                           @RequestParam boolean refresh) {
+        return matchService.createMatches(category, age, refresh);
     }
 
     @PostMapping("/save-scores")
