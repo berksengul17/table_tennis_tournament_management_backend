@@ -141,6 +141,7 @@ public class GroupService {
 
     private void sortGroupParticipants(List<Group> groups) {
         for (Group group: groups) {
+            if (group.getId() == 365) continue;
             group.getParticipants().sort(new ParticipantComparator());
         }
     }
