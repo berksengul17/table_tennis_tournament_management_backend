@@ -72,6 +72,7 @@ public class BracketService {
         if (round == null || nextRound == null) return null;
 
         List<Seed> seeds = round.getSeeds();
+
         SeedResult result = calculateSeedInfo(seeds, participant);
         int nextRoundSeedIndex = result.getNextRoundSeedIndex();
         boolean isLowerSeed = result.isLowerSeed();
@@ -79,27 +80,42 @@ public class BracketService {
         List<Seed> nextRoundSeeds = nextRound.getSeeds();
         Seed nextRoundSeed = nextRoundSeeds.get(nextRoundSeedIndex);
 
-        List<Participant> nextRoundSeedParticipants = seedParticipantRepository
-                .findAllBySeed(nextRoundSeed)
-                .stream()
-                .map(SeedParticipant::getParticipant)
-                .collect(Collectors.toCollection(ArrayList::new));
+        List<SeedParticipant> nextRoundSeedParticipants = seedParticipantRepository
+                .findAllBySeed(nextRoundSeed);
 
-        if (isLowerSeed && nextRoundSeedParticipants.size() == 1) {
-            nextRoundSeedParticipants.add(participant);
-        } else if (isLowerSeed && nextRoundSeedParticipants.isEmpty()) {
-            nextRoundSeedParticipants.add(null);
-            nextRoundSeedParticipants.add(participant);
-        } else if (!isLowerSeed && nextRoundSeedParticipants.size() == 1) {
-            nextRoundSeedParticipants.add(nextRoundSeedParticipants.get(0));
-            nextRoundSeedParticipants.set(0, participant);
-        } else if (!isLowerSeed && nextRoundSeedParticipants.isEmpty()) {
-            nextRoundSeedParticipants.add(participant);
-        } else {
-            nextRoundSeedParticipants.set(isLowerSeed ? 1 : 0, participant);
+        if (nextRoundSeedParticipants.isEmpty()) {
+            nextRoundSeedParticipants.add(
+                    seedParticipantRepository.save(new SeedParticipant(nextRoundSeed)));
+            nextRoundSeedParticipants.add(
+                    seedParticipantRepository.save(new SeedParticipant(nextRoundSeed)));
         }
 
-        seedRepository.save(nextRoundSeed);
+        if (isLowerSeed) {
+            nextRoundSeedParticipants.get(0).setPIndex(0);
+            SeedParticipant sp = nextRoundSeedParticipants.get(1);
+            sp.setParticipant(participant);
+            sp.setPIndex(1);
+        } else {
+            nextRoundSeedParticipants.get(1).setPIndex(1);
+            SeedParticipant sp = nextRoundSeedParticipants.get(0);
+            sp.setParticipant(participant);
+            sp.setPIndex(0);
+        }
+
+//        if (isLowerSeed) {
+//            nextRoundSeedParticipants.add(participant);
+//        } else if (isLowerSeed && nextRoundSeedParticipants.isEmpty()) {
+//            nextRoundSeedParticipants.add(null);
+//            nextRoundSeedParticipants.add(participant);
+//        } else if (!isLowerSeed && nextRoundSeedParticipants.size() == 1) {
+//            nextRoundSeedParticipants.add(nextRoundSeedParticipants.get(0));
+//            nextRoundSeedParticipants.set(0, participant);
+//        } else if (!isLowerSeed && nextRoundSeedParticipants.isEmpty()) {
+//            nextRoundSeedParticipants.add(participant);
+//        } else {
+//            nextRoundSeedParticipants.set(isLowerSeed ? 1 : 0, participant);
+//        }
+
         roundRepository.save(nextRound);
         return bracketRepository.save(bracket);
     }
