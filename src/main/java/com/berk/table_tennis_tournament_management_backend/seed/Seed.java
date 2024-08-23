@@ -1,13 +1,12 @@
 package com.berk.table_tennis_tournament_management_backend.seed;
 
-import com.berk.table_tennis_tournament_management_backend.participant.Participant;
-import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.List;
 
 @Entity
 @Getter
@@ -17,15 +16,15 @@ public class Seed {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @ManyToMany
-    @JoinTable(name = "seed_participant",
-            joinColumns = @JoinColumn(name="seed_id"),
-            inverseJoinColumns = @JoinColumn(name = "participant_id"))
-    private List<Participant> participants;
-
-    public Seed(List<Participant> participants) {
-        this.participants = participants;
-    }
+//    @ManyToMany
+//    @JoinTable(name = "seed_participant",
+//            joinColumns = @JoinColumn(name="seed_id"),
+//            inverseJoinColumns = @JoinColumn(name = "participant_id"))
+//    private List<Participant> participants;
+//
+//    public Seed(List<Participant> participants) {
+//        this.participants = participants;
+//    }
 
     // FIXME: Burdaki sort advanceToNextRound u bozuyor. Nerde lazımsa orda sort olması lazım
 //    public List<Participant> getParticipants() {
