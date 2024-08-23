@@ -131,9 +131,11 @@ public class GroupService {
             // delete related group table time
             GroupTableTime groupTableTime = groupTableTimeRepository.findByGroup(group);
             // reset related table time as available
-            groupTableTime.getTableTime().setAvailable(true);
-            groupTableTimeRepository.deleteById(
-                    groupTableTime.getId());
+            if (groupTableTime != null) {
+                groupTableTime.getTableTime().setAvailable(true);
+                groupTableTimeRepository.deleteById(
+                        groupTableTime.getId());
+            }
             // delete related matches
             matchRepository.deleteAllById(
                     matchRepository.findAllByGroup(group)
