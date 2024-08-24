@@ -300,6 +300,18 @@ public class BracketService {
         return seeds;
     }
 
+    public int getNextSeedId(Long seedId) {
+        List<SeedParticipant> seedParticipants =
+                seedParticipantRepository.findAllBySeedId(seedId);
+        for (SeedParticipant sp : seedParticipants) {
+            if (sp.getParticipant() != null) {
+                return calculateSeedInfo(seedRepository.findAll(), sp.getParticipant()).getNextRoundSeedIndex();
+            }
+        }
+
+        return -1;
+    }
+
     private void calculateByes(List<Seed> seeds,
                                int numOfByes, int startingIndex,
                                List<Participant> participants) {

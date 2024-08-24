@@ -22,7 +22,7 @@ public class SeedParticipant {
     @JoinColumn(name = "participant_id")
     private Participant participant;
     private int pIndex;
-    private int score;
+    private Integer score;
 
     public SeedParticipant(Seed seed) {
         this.seed = seed;

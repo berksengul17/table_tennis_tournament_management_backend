@@ -29,7 +29,8 @@ public class LogFilter implements Filter {
             httpRequest.getRequestURI().contains("/download-age-categories") ||
             httpRequest.getRequestURI().contains("/download-groups") ||
             httpRequest.getRequestURI().contains("/download-group-table-time") ||
-            httpRequest.getRequestURI().contains("/download-all-group-table-time")) {
+            httpRequest.getRequestURI().contains("/download-all-group-table-time") ||
+            httpRequest.getRequestURI().contains("/download-bracket")) {
             chain.doFilter(request, response);
             return;
         }

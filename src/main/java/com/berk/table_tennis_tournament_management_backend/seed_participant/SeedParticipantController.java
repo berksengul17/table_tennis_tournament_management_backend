@@ -2,10 +2,7 @@ package com.berk.table_tennis_tournament_management_backend.seed_participant;
 
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -14,10 +11,17 @@ import java.util.List;
 @AllArgsConstructor
 public class SeedParticipantController {
 
-    private final SeedParticipantRepository seedParticipantRepository;
+    private final SeedParticipantService seedParticipantService;
 
     @GetMapping("/{id}")
     public List<SeedParticipant> getById(@PathVariable Long id) {
-        return seedParticipantRepository.findAllBySeedId(id);
+        return seedParticipantService.getAllBySeedId(id);
+    }
+
+    @PostMapping("/save-scores")
+    public void saveScores(@RequestParam Long seedId,
+                                            @RequestParam int p1Score,
+                                            @RequestParam int p2Score) {
+        seedParticipantService.saveScores(seedId, p1Score, p2Score);
     }
 }

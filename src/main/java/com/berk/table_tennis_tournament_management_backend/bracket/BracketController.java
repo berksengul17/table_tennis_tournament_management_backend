@@ -1,5 +1,8 @@
 package com.berk.table_tennis_tournament_management_backend.bracket;
 
+import com.berk.table_tennis_tournament_management_backend.participant.Participant;
+import com.berk.table_tennis_tournament_management_backend.seed.Seed;
+import com.berk.table_tennis_tournament_management_backend.seed_participant.SeedParticipant;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,5 +33,10 @@ public class BracketController {
                                       @RequestParam Long bracketId,
                                       @RequestParam Long roundId) {
         return bracketService.advanceToNextRound(participantId, bracketId, roundId);
+    }
+
+    @GetMapping("/get-next-seed-id")
+    public int getNextSeedId(@RequestParam Long seedId) {
+        return bracketService.getNextSeedId(seedId);
     }
 }

@@ -17,19 +17,18 @@ import com.berk.table_tennis_tournament_management_backend.participant_age_categ
 import com.berk.table_tennis_tournament_management_backend.table.Table;
 import com.berk.table_tennis_tournament_management_backend.time.Time;
 import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.BaseFont;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
-import com.itextpdf.text.pdf.PdfWriter;
-import jakarta.servlet.http.Part;
+import com.itextpdf.text.pdf.*;
 import lombok.AllArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -42,6 +41,52 @@ public class DocumentService {
     private final GroupRepository groupRepository;
     private final GroupTableTimeRepository groupTableTimeRepository;
     private final MatchService matchService;
+
+    public byte[] createBracketPdf() throws DocumentException {
+
+        Document document = new Document();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        PdfWriter writer = PdfWriter.getInstance(document, byteArrayOutputStream);
+        document.open();
+        PdfContentByte canvas = writer.getDirectContent();
+
+        // Example to draw a bracket
+        float startX = 50;
+        float startY = 700;
+        float boxWidth = 100;
+        float boxHeight = 30;
+        float gap = 50;
+
+        // Draw first round
+        for (int i = 0; i < 4; i++) {
+            canvas.rectangle(startX, startY - (i * (boxHeight + gap)), boxWidth, boxHeight);
+            canvas.stroke();
+        }
+
+        // Draw connecting lines to the second round
+        for (int i = 0; i < 2; i++) {
+            float midX = startX + boxWidth + 10;
+            float midY1 = startY - (i * 2 * (boxHeight + gap)) - boxHeight / 2;
+            float midY2 = startY - ((i * 2 + 1) * (boxHeight + gap)) - boxHeight / 2;
+            float midY = (midY1 + midY2) / 2; // Correct midpoint between the two rectangles
+
+            canvas.moveTo(startX + boxWidth, midY1); // Start from the center of the right edge of the left box
+            canvas.lineTo(midX, midY); // Go to the midpoint vertically
+            canvas.lineTo(startX + boxWidth + 20, midY); // Connect to the center of the left edge of the right box
+            canvas.stroke();
+        }
+
+        // Draw second round
+        for (int i = 0; i < 2; i++) {
+            canvas.rectangle(startX + boxWidth + 20, startY - (i * 2 * (boxHeight + gap)) - (boxHeight + gap) / 2, boxWidth, boxHeight);
+            canvas.stroke();
+        }
+
+        document.close();
+        System.out.println("PDF created");
+        return byteArrayOutputStream.toByteArray();
+    }
+
 
     public byte[] createAgeCategoriesPdf() throws IOException, DocumentException {
         Document document = new Document();

@@ -18,6 +18,22 @@ public class DocumentController {
     private final AgeCategoryRepository ageCategoryRepository;
     private final DocumentService documentService;
 
+    @GetMapping("/download-bracket")
+    public ResponseEntity<?> downloadBracketPdf() {
+        try {
+            byte[] eligibleStudentsPdf = documentService.createBracketPdf();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(
+                    ContentDisposition.builder("attachment")
+                            .filename("bracket.pdf")
+                            .build());
+            return new ResponseEntity<>(eligibleStudentsPdf, headers, HttpStatus.OK);
+        } catch (DocumentException e ) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Document error:" + e.getMessage());
+        }
+    }
     @GetMapping("/download-age-categories")
     public ResponseEntity<?> downloadAgeCategoriesPdf() {
         try {
