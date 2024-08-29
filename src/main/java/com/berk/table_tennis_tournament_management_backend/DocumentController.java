@@ -26,6 +26,9 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
+import java.util.Comparator;
+import java.text.Collator;
+import java.util.Locale;
 
 @AllArgsConstructor
 @RestController
@@ -88,8 +91,10 @@ public class DocumentController {
 
                 Paragraph para = new Paragraph(category.label + " " + age.age + ":",
                         new Font(baseFont, 16));
+                Paragraph countPara = new Paragraph("Katılımcı Sayısı: " + String.valueOf(participantAgeCategories.size()), 
+			new Font(baseFont, 12));
 
-                PdfPTable table = new PdfPTable(7);
+                PdfPTable table = new PdfPTable(8);
                 table.setSpacingAfter(10);
                 table.setSpacingBefore(10);
                 table.setWidthPercentage(100);
@@ -100,6 +105,7 @@ public class DocumentController {
                 addRows(table, participantAgeCategories, font);
 
                 document.add(para);
+		document.add(countPara);
                 document.add(table);
             }
         }
@@ -110,7 +116,7 @@ public class DocumentController {
     }
 
     private void addTableHeader(PdfPTable table, Font font) {
-        Stream.of("Ad-Soyad", "E-mail", "Cinsiyet", "Doğum Tarihi",
+        Stream.of("Sıra No.", "Ad-Soyad", "E-mail", "Cinsiyet", "Doğum Tarihi",
                         "Telefon Numarası", "Katıldığı Şehir", "Puan")
                 .forEach(columnTitle -> {
                     PdfPCell header = new PdfPCell();
@@ -122,13 +128,17 @@ public class DocumentController {
     }
 
     private void addRows(PdfPTable table, List<ParticipantAgeCategory> participants, Font font) {
+	Collator collator = Collator.getInstance(new Locale("tr", "TR"));
+	participants.sort(Comparator.comparing(p -> p.getParticipant().getFullName(), collator::compare));
+        int rowCount = 1;
         for (ParticipantAgeCategory participantAgeCategory :participants) {
             Participant participant = participantAgeCategory.getParticipant();
-            String[] names = (participant.getFirstName() + " " + participant.getLastName()).split(" ");
-            String fullName = String.join(" ",
+            String[] names = (participant.getFirstName().trim() + " " + participant.getLastName().trim()).split(" ");
+	    String fullName = String.join(" ",
                     Arrays.stream(names)
                             .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
                                     name.substring(1)).toList());
+	    table.addCell(new Phrase(String.valueOf(rowCount), font));
             table.addCell(new Phrase(fullName, font));
             table.addCell(new Phrase(participant.getEmail(), font));
             table.addCell(new Phrase(participant.getGender().label, font));
@@ -136,6 +146,7 @@ public class DocumentController {
             table.addCell(new Phrase(participant.getPhoneNumber(), font));
             table.addCell(new Phrase(participant.getCity(), font));
             table.addCell(new Phrase(String.valueOf(participant.getRating()), font));
+            rowCount++;
         }
     }
 }
