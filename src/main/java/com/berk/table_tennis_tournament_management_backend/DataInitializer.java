@@ -4,6 +4,7 @@ import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTimeRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.GENDER;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
@@ -46,8 +47,8 @@ public class DataInitializer implements CommandLineRunner {
     private final AgeCategoryRepository ageCategoryRepository;
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
     private final RatingRepository ratingRepository;
-    private final TimeRepository timeRepository;
     private final TableRepository tableRepository;
+    private final TimeRepository timeRepository;
     private final TableTimeRepository tableTimeRepository;
     private final List<DateTimeFormatter> DATE_FORMATTERS = List.of(
             DateTimeFormatter.ofPattern("dd.MM.yyyy"),

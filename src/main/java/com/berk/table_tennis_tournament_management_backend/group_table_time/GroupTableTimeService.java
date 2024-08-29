@@ -52,6 +52,7 @@ public class GroupTableTimeService {
         return groupTableTimeList;
     }
 
+    // FIXME: MASA KAYDEDERKEN SORUN YAŞAMAYA BAŞLADIM
     @Transactional
     public List<GroupTableTime> saveGroupTableTimes(List<GroupTableTime> groupTableTimeList) {
         if (groupTableTimeList.isEmpty()) {

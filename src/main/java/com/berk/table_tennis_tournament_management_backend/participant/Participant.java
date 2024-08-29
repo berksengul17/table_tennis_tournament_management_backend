@@ -35,6 +35,7 @@ public class Participant {
     private String city;
     private int rating;
     private int groupRanking;
+    //private String pair;
 
     public Participant(ParticipantDTO participantDTO) {
         this.firstName = StringHelper.toLowerCaseTurkish(participantDTO.getFirstName());

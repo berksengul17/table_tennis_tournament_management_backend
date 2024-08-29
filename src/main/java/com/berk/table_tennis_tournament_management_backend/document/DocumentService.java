@@ -180,7 +180,7 @@ public class DocumentService {
         document.add(para);
 
         for (int i=0; i<groups.size(); i++) {
-            PdfPTable table = new PdfPTable(2);
+            PdfPTable table = new PdfPTable(3);
             table.setSpacingAfter(10);
             table.setSpacingBefore(10);
             addTableHeaderGroup(table, font);
@@ -310,6 +310,8 @@ public class DocumentService {
 
         for (AGE_CATEGORY category : AGE_CATEGORY.values()) {
             for (AGE age : category.ageList) {
+                //if (category != AGE_CATEGORY.DOUBLE_MEN &&
+                //category != AGE_CATEGORY.DOUBLE_WOMEN) continue;
                 List<Group> groups = groupRepository
                         .findByAgeCategory_CategoryAndAgeCategory_Age(category, age);
 
@@ -328,6 +330,7 @@ public class DocumentService {
                     List<Participant> participants = group.getParticipants();
                     participants.sort((p1, p2) -> p1.getGroupRanking() > p2.getGroupRanking() ? 1 : -1);
                     GroupTableTime gtt = groupTableTimeRepository.findByGroup(group);
+                    if (gtt == null) continue;
                     addTableHeaderGroupTableTime(table,
                             font,
                             gtt,
@@ -349,9 +352,9 @@ public class DocumentService {
                     titleAndTable.add(table);
 
                     List<Match> matches = matchService.getGroupMatches(group);
-                    Paragraph matchTitle = new Paragraph("Maçlar:", new Font(baseFont, 14));
-                    matchTitle.setKeepTogether(true);
-                    titleAndTable.add(matchTitle);
+                    //Paragraph matchTitle = new Paragraph("Maçlar:", new Font(baseFont, 14));
+                    //matchTitle.setKeepTogether(true);
+                    //titleAndTable.add(matchTitle);
                     for (Match match : matches) {
                         String p1Name = StringHelper.upperCaseFirstLetter(match.getP1().getFullName());
                         String p2Name = StringHelper.upperCaseFirstLetter(match.getP2().getFullName());
@@ -398,8 +401,13 @@ public class DocumentService {
                     score = matchService.calculateScore(numOfWins, numOfLoses);
                 }
 
+                String name = fullName + "(" + city + ")" + " - " + rating;
+                //if (participant.getPair() != null && !participant.getPair().isEmpty()) {
+                //    name = fullName + " - " + participant.getPair();
+                //}
+
                 PdfPCell nameCell = new PdfPCell(
-                        new Phrase(fullName + "(" + city + ")" + " - " + rating, font));
+                        new Phrase(name, font));
                 table.addCell(nameCell);
 
                 for (int j = 0; j < 4; j++) {
@@ -550,6 +558,7 @@ public class DocumentService {
     }
 
     private void addRowsGroup(Document document, PdfPTable table, List<Participant> participants, Font font) throws DocumentException {
+        participants.sort((p1, p2) -> p1.getGroupRanking() > p2.getGroupRanking() ? 1 : -1);
         for (int i = 0; i < participants.size(); i++) {
             Participant participant = participants.get(i);
             String[] names = (participant.getFirstName() + " " + participant.getLastName()).split(" ");
@@ -595,6 +604,16 @@ public class DocumentService {
                 case SIXTY_PLUS:
                     return "J";
             }
+        } else if (category == AGE_CATEGORY.DOUBLE_MEN) {
+            switch(age) {
+                case FIFTY_TO_FIFTY_NINE: return "A";
+                case FORTY_TO_FORTY_NINE: return "B";
+                case SEVENTY_PLUS: return "D";
+                case THIRTY_TO_THIRTY_NINE: return "E";
+                case SIXTY_TO_SIXTY_FOUR: return "F";
+            }
+        } else if (category == AGE_CATEGORY.DOUBLE_WOMEN) {
+            return "K";
         }
 
         return "";
