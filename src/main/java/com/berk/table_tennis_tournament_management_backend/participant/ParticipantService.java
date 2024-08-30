@@ -1,11 +1,14 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
+import com.berk.table_tennis_tournament_management_backend.CSVHelper;
 import com.berk.table_tennis_tournament_management_backend.ExcelHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.hotel.HotelRepository;
+import com.berk.table_tennis_tournament_management_backend.match.Match;
+import com.berk.table_tennis_tournament_management_backend.match.MatchRepository;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryDTO;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
@@ -19,55 +22,6 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-/*
-@Service
-public class ParticipantService {
-
-    private final ParticipantRepository participantRepository;
-    private final CategorizedParticipantRepository categorizedParticipantRepository;
-
-    public ParticipantService(ParticipantRepository participantRepository, CategorizedParticipantRepository categorizedParticipantRepository) {
-        this.participantRepository = participantRepository;
-        this.categorizedParticipantRepository = categorizedParticipantRepository;
-    }
-
-    public Participant register(Participant participant) {
-        return participantRepository.save(participant);
-    }
-
-    public List<Participant> getParticipants() {
-        return participantRepository.findAll();
-    }
-
-    public Map<Integer, List<Participant>> categorizeParticipants() {
-        List<Participant> participants = getParticipants();
-        Map<Integer, List<Participant>> categorizedParticipants = new HashMap<>();
-
-        for (Participant participant : participants) {
-            int ageCategory = participant.getAgeCategory();
-            List<Participant> players = categorizedParticipants.get(ageCategory);
-            if (players == null) {
-                players = new ArrayList<>();
-            }
-            players.add(participant);
-            categorizedParticipants.put(ageCategory, players);
-        }
-
-        saveCategorizedParticipants(categorizedParticipants);
-
-        return categorizedParticipants;
-    }
-
-    private void saveCategorizedParticipants(Map<Integer, List<Participant>> categorizedParticipants) {
-        for (Map.Entry<Integer, List<Participant>> entry : categorizedParticipants.entrySet()) {
-            CategorizedParticipant cp = new CategorizedParticipant();
-            cp.setAgeCategory(entry.getKey());
-            cp.setParticipants(entry.getValue());
-            categorizedParticipantRepository.save(cp);
-        }
-    }
-}
-*/
 @Service
 @AllArgsConstructor
 public class ParticipantService {
@@ -77,6 +31,7 @@ public class ParticipantService {
     private final ParticipantAgeCategoryRepository participantAgeCategoryRepository;
     private HotelRepository hotelRepository;
     private final RatingRepository ratingRepository;
+    private final MatchRepository matchRepository;
 
     public ParticipantAgeCategoryDTO register(ParticipantDTO participantDTO) {
         if (participantDTO.getFirstName() == null) {
@@ -116,13 +71,13 @@ public class ParticipantService {
 
         GENDER gender = GENDER.valueOf(participantDTO.getGender());
 
-//        List<AGE_CATEGORY> categories = gender == GENDER.MALE ?
-//                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
-//
-//        AGE_CATEGORY category = categories.get(participantDTO.getCategory());
-//        AGE age = category.ageList.get(participantDTO.getAge());
-        AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.SINGLE_MEN : AGE_CATEGORY.SINGLE_WOMEN;
-        AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
+        List<AGE_CATEGORY> categories = gender == GENDER.MALE ?
+                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
+
+        AGE_CATEGORY category = categories.get(participantDTO.getCategory());
+        AGE age = category.ageList.get(participantDTO.getAge());
+//        AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.SINGLE_MEN : AGE_CATEGORY.SINGLE_WOMEN;
+//        AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
         AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
 
         ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory(ageCategory,
@@ -131,6 +86,7 @@ public class ParticipantService {
 
         participantAgeCategoryRepository.save(participantAgeCategory);
 
+        CSVHelper.addLine(participantAgeCategory);
 //        ExcelHelper.editRow(participantAgeCategory, true);
 
         return new ParticipantAgeCategoryDTO(participantAgeCategory);
@@ -146,10 +102,15 @@ public class ParticipantService {
 
         ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
                 .findByParticipant(participant);
+        List<Match> matches = matchRepository.findAllByParticipant(participant);
+
+        // delete all matches where the participant is involved
+        matchRepository.deleteAllById(matches.stream().map(Match::getId).toList());
 
         participantAgeCategoryRepository.delete(participantAgeCategory);
-        participantRepository.delete(participant);
+        participantRepository.deleteById(participant.getId());
 
+        CSVHelper.deleteLine(participantId);
 //        ExcelHelper.deleteRow(participantId);
     }
 
@@ -225,13 +186,6 @@ public class ParticipantService {
 
     private long calculateAge(LocalDate birthDate) {
         LocalDate now = LocalDate.now();
-        long yearsBetween = ChronoUnit.YEARS.between(birthDate, now);
-        int monthDifference = now.getMonthValue() - birthDate.getMonthValue();
-
-        if (monthDifference < 0 || (monthDifference == 0 && now.getDayOfMonth() < birthDate.getDayOfMonth())) {
-            yearsBetween--;
-        }
-
-        return yearsBetween;
+        return ChronoUnit.YEARS.between(birthDate, now);
     }
 }

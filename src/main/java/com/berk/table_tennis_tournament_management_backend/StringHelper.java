@@ -17,4 +17,16 @@ public class StringHelper {
         }
         return input.toUpperCase(new Locale("tr", "TR"));
     }
+
+    public static String upperCaseFirstLetter(String input) {
+        String[] splitInput = input.split(" ");
+        StringBuilder builder = new StringBuilder();
+        for (String name : splitInput) {
+            builder.append(toUpperCaseTurkish(name.substring(0, 1)))
+                    .append(toLowerCaseTurkish(name.substring(1)));
+            builder.append(' ');
+        }
+
+        return builder.toString();
+    }
 }

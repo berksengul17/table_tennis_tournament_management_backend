@@ -38,8 +38,8 @@ public class Participant {
     private Hotel hotel;
 
     public Participant(ParticipantDTO participantDTO) {
-        this.firstName = participantDTO.getFirstName();
-        this.lastName = participantDTO.getLastName();
+        this.firstName = StringHelper.toLowerCaseTurkish(participantDTO.getFirstName());
+        this.lastName = StringHelper.toLowerCaseTurkish(participantDTO.getLastName());
         this.email = participantDTO.getEmail();
         this.phoneNumber = participantDTO.getPhoneNumber();
         this.gender = GENDER.valueOf(participantDTO.getGender());

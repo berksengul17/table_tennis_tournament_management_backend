@@ -1,5 +1,8 @@
 package com.berk.table_tennis_tournament_management_backend.bracket;
 
+import com.berk.table_tennis_tournament_management_backend.participant.Participant;
+import com.berk.table_tennis_tournament_management_backend.seed.Seed;
+import com.berk.table_tennis_tournament_management_backend.seed_participant.SeedParticipant;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,15 +23,20 @@ public class BracketController {
         return bracketService.getLosersBracket(category, age);
     }
 
-//    @PostMapping("/create-winners-bracket/{category}/{age}")
-//    public Bracket createWinnersBracket(@PathVariable int category, @PathVariable int age) {
-//        return bracketService.createWinnersBracket(category, age);
-//    }
+    @PostMapping("/create-winners-bracket/{category}/{age}")
+    public Bracket createWinnersBracket(@PathVariable int category, @PathVariable int age) {
+        return bracketService.createWinnersBracket(category, age);
+    }
 
     @PutMapping("/advance-to-next-round")
     public Bracket advanceToNextRound(@RequestParam Long participantId,
                                       @RequestParam Long bracketId,
                                       @RequestParam Long roundId) {
         return bracketService.advanceToNextRound(participantId, bracketId, roundId);
+    }
+
+    @GetMapping("/get-next-seed-id")
+    public int getNextSeedId(@RequestParam Long seedId) {
+        return bracketService.getNextSeedId(seedId);
     }
 }
