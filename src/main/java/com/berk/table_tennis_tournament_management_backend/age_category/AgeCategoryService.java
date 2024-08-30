@@ -98,4 +98,10 @@ public class AgeCategoryService {
                         .map(a -> a.age)
                         .toList();
     }
+
+    public boolean isDouble(AGE_CATEGORY category) {
+        return Arrays.asList(AGE_CATEGORY.DOUBLE_MEN,
+                AGE_CATEGORY.DOUBLE_WOMEN,
+                AGE_CATEGORY.MIX).contains(category);
+    }
 }

@@ -4,6 +4,7 @@ import com.berk.table_tennis_tournament_management_backend.StringHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryService;
 import com.berk.table_tennis_tournament_management_backend.group.Group;
 import com.berk.table_tennis_tournament_management_backend.group.GroupRepository;
 import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTime;
@@ -14,6 +15,7 @@ import com.berk.table_tennis_tournament_management_backend.participant.Participa
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
+import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryService;
 import com.berk.table_tennis_tournament_management_backend.table.Table;
 import com.berk.table_tennis_tournament_management_backend.time.Time;
 import com.itextpdf.text.*;
@@ -26,9 +28,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.text.Collator;
+import java.util.*;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -41,6 +42,8 @@ public class DocumentService {
     private final GroupRepository groupRepository;
     private final GroupTableTimeRepository groupTableTimeRepository;
     private final MatchService matchService;
+    private final AgeCategoryService ageCategoryService;
+    private final ParticipantAgeCategoryService participantAgeCategoryService;
 
     public byte[] createBracketPdf() throws DocumentException {
 
@@ -87,7 +90,6 @@ public class DocumentService {
         return byteArrayOutputStream.toByteArray();
     }
 
-
     public byte[] createAgeCategoriesPdf() throws IOException, DocumentException {
         Document document = new Document();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -114,6 +116,7 @@ public class DocumentService {
         document.open();
 
         for (AGE_CATEGORY category : AGE_CATEGORY.values()) {
+            boolean isJoiningDouble = ageCategoryService.isDouble(category);
             for (AGE age : category.ageList) {
                 List<ParticipantAgeCategory> participantAgeCategories =
                         participantAgeCategoryRepository.findAllByAgeCategory(
@@ -121,18 +124,21 @@ public class DocumentService {
 
                 Paragraph para = new Paragraph(category.label + " " + age.age + ":",
                         new Font(baseFont, 16));
+                Paragraph countPara = new Paragraph("Katılımcı Sayısı: " +
+                        participantAgeCategories.size(), new Font(baseFont, 12));
 
-                PdfPTable table = new PdfPTable(8);
+                PdfPTable table = new PdfPTable(isJoiningDouble ? 9 : 8);
                 table.setSpacingAfter(10);
                 table.setSpacingBefore(10);
                 table.setWidthPercentage(100);
 
                 if (participantAgeCategories.isEmpty()) continue;
 
-                addTableHeader(table, font);
-                addRows(table, participantAgeCategories, font);
+                addTableHeader(table, font, isJoiningDouble);
+                addRows(table, participantAgeCategories, font, isJoiningDouble);
 
                 document.add(para);
+                document.add(countPara);
                 document.add(table);
             }
         }
@@ -179,14 +185,16 @@ public class DocumentService {
 
         document.add(para);
 
+        boolean isJoiningDoubles = ageCategoryService.isDouble(categoryEnum);
+
         for (int i=0; i<groups.size(); i++) {
-            PdfPTable table = new PdfPTable(3);
+            PdfPTable table = new PdfPTable(isJoiningDoubles ? 3 : 2);
             table.setSpacingAfter(10);
             table.setSpacingBefore(10);
-            addTableHeaderGroup(table, font);
+            addTableHeaderGroup(table, font, isJoiningDoubles);
             List<Participant> participants = groups.get(i).getParticipants();
             participants.sort(new ParticipantComparator());
-            addRowsGroup(document, table, participants, font);
+            addRowsGroup(document, table, participants, font, isJoiningDoubles);
             Paragraph titleAndTable = new Paragraph();
             titleAndTable.setKeepTogether(true);
             // Create and add the title
@@ -386,11 +394,7 @@ public class DocumentService {
         for (int i = 0; i < 4; i++) {  // Loop over the maximum number of participants (4)
             if (i < participantCount) {
                 Participant participant = participants.get(i);
-                String[] names = (participant.getFirstName() + " " + participant.getLastName()).split(" ");
-                String fullName = String.join(" ",
-                        Arrays.stream(names)
-                                .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
-                                        name.substring(1)).toList());
+                String fullName = StringHelper.formatName(participant);
                 String rating = String.valueOf(participant.getRating());
                 String city = participant.getCity();
 
@@ -514,8 +518,9 @@ public class DocumentService {
                 });
     }
 
-    private void addTableHeader(PdfPTable table, Font font) {
-        Stream.of("Sıra No.", "Ad-Soyad", "E-mail", "Cinsiyet", "Doğum Tarihi",
+    private void addTableHeader(PdfPTable table, Font font, boolean isJoiningDouble) {
+        Stream.of("Sıra No.", "Ad-Soyad", isJoiningDouble ? "Eşi" : null,
+                        "E-mail", "Cinsiyet", "Doğum Tarihi",
                         "Telefon Numarası", "Katıldığı Şehir", "Puan")
                 .forEach(columnTitle -> {
                     PdfPCell header = new PdfPCell();
@@ -526,28 +531,32 @@ public class DocumentService {
                 });
     }
 
-    private void addRows(PdfPTable table, List<ParticipantAgeCategory> participants, Font font) {
-        for (int i=0; i<participants.size(); i++) {
-            ParticipantAgeCategory participantAgeCategory = participants.get(i);
+    private void addRows(PdfPTable table, List<ParticipantAgeCategory> participants,
+                         Font font, boolean isJoiningDouble) {
+        Collator collator = Collator.getInstance(new Locale("tr", "TR"));
+        participants.sort(Comparator.comparing(p -> p.getParticipant().getFullName(), collator::compare));
+        int rowCount = 1;
+        for (ParticipantAgeCategory participantAgeCategory : participants) {
             Participant participant = participantAgeCategory.getParticipant();
-            String[] names = (participant.getFirstName() + " " + participant.getLastName()).split(" ");
-            String fullName = String.join(" ",
-                    Arrays.stream(names)
-                            .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
-                                    name.substring(1)).toList());
-            table.addCell(new Phrase(String.valueOf(i + 1), font));
+            String fullName = StringHelper.formatName(participant);
+            table.addCell(new Phrase(String.valueOf(rowCount), font));
             table.addCell(new Phrase(fullName, font));
+            if (isJoiningDouble) {
+                table.addCell(new Phrase(
+                        StringHelper.formatName(participantAgeCategory.getPairName()), font));
+            }
             table.addCell(new Phrase(participant.getEmail(), font));
             table.addCell(new Phrase(participant.getGender().label, font));
             table.addCell(new Phrase(participant.getBirthDate().toString(), font));
             table.addCell(new Phrase(participant.getPhoneNumber(), font));
             table.addCell(new Phrase(participant.getCity(), font));
             table.addCell(new Phrase(String.valueOf(participant.getRating()), font));
+            rowCount++;
         }
     }
 
-    private void addTableHeaderGroup(PdfPTable table, Font font) {
-        Stream.of("Sıra No.", "Ad-Soyad")
+    private void addTableHeaderGroup(PdfPTable table, Font font, boolean isDouble) {
+        Stream.of("Sıra No.", "Ad-Soyad", isDouble ? "Eşi" : null)
                 .forEach(columnTitle -> {
                     PdfPCell header = new PdfPCell();
                     header.setBackgroundColor(BaseColor.LIGHT_GRAY);
@@ -557,16 +566,17 @@ public class DocumentService {
                 });
     }
 
-    private void addRowsGroup(Document document, PdfPTable table, List<Participant> participants, Font font) throws DocumentException {
+    private void addRowsGroup(Document document, PdfPTable table, List<Participant> participants,
+                              Font font, boolean isJoiningDoubles) throws DocumentException {
         participants.sort((p1, p2) -> p1.getGroupRanking() > p2.getGroupRanking() ? 1 : -1);
         for (int i = 0; i < participants.size(); i++) {
             Participant participant = participants.get(i);
-            String[] names = (participant.getFirstName() + " " + participant.getLastName()).split(" ");
-            String fullName = String.join(" ",
-                    Arrays.stream(names)
-                            .map(name -> StringHelper.toUpperCaseTurkish(name.substring(0, 1)) +
-                                    name.substring(1)).toList());
-
+            ParticipantAgeCategory participantAgeCategory = null;
+            if (isJoiningDoubles) {
+                participantAgeCategory =
+                        participantAgeCategoryRepository.findByParticipant(participant);
+            }
+            String fullName = StringHelper.formatName(participant);
             // Add Sıra No. (Row Number)
             PdfPCell cell1 = new PdfPCell(new Phrase(String.valueOf(i + 1), font));
             table.addCell(cell1);
@@ -574,6 +584,11 @@ public class DocumentService {
             // Add Ad-Soyad (Full Name)
             PdfPCell cell2 = new PdfPCell(new Phrase(fullName, font));
             table.addCell(cell2);
+
+            if (participantAgeCategory != null) {
+                PdfPCell cell3 = new PdfPCell(new Phrase(participantAgeCategory.getPairName(), font));
+                table.addCell(cell3);
+            }
         }
         document.add(new Phrase("\n"));
 

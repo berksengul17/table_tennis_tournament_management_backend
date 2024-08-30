@@ -1,7 +1,5 @@
 package com.berk.table_tennis_tournament_management_backend.participant;
 
-import com.berk.table_tennis_tournament_management_backend.CSVHelper;
-import com.berk.table_tennis_tournament_management_backend.ExcelHelper;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
@@ -15,7 +13,6 @@ import com.berk.table_tennis_tournament_management_backend.participant_age_categ
 import com.berk.table_tennis_tournament_management_backend.rating.Rating;
 import com.berk.table_tennis_tournament_management_backend.rating.RatingRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -71,23 +68,30 @@ public class ParticipantService {
 
         GENDER gender = GENDER.valueOf(participantDTO.getGender());
 
-        List<AGE_CATEGORY> categories = gender == GENDER.MALE ?
-                AGE_CATEGORY.getMenCategoryList() : AGE_CATEGORY.getWomenCategoryList();
+        if (participantDTO.getPairName() != null) {
+            Participant foundParticipant = participantRepository
+                    .findByFullName(participantDTO.getPairName());
+            if (foundParticipant == null) {
+                AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.DOUBLE_MEN : AGE_CATEGORY.DOUBLE_WOMEN;
+                AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
+                AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
 
-        AGE_CATEGORY category = categories.get(participantDTO.getCategory());
-        AGE age = category.ageList.get(participantDTO.getAge());
-//        AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.SINGLE_MEN : AGE_CATEGORY.SINGLE_WOMEN;
-//        AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
+                ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory(ageCategory,
+                        participant,
+                        participantDTO.getPairName());
+
+                participantAgeCategoryRepository.save(participantAgeCategory);
+            }
+        }
+
+        AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.SINGLE_MEN : AGE_CATEGORY.SINGLE_WOMEN;
+        AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
         AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
 
         ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory(ageCategory,
-                participant,
-                participantDTO.getPairName());
+                participant, "");
 
         participantAgeCategoryRepository.save(participantAgeCategory);
-
-        CSVHelper.addLine(participantAgeCategory);
-//        ExcelHelper.editRow(participantAgeCategory, true);
 
         return new ParticipantAgeCategoryDTO(participantAgeCategory);
     }
@@ -110,8 +114,6 @@ public class ParticipantService {
         participantAgeCategoryRepository.delete(participantAgeCategory);
         participantRepository.deleteById(participant.getId());
 
-        CSVHelper.deleteLine(participantId);
-//        ExcelHelper.deleteRow(participantId);
     }
 
     public List<AgeCategoryWeight> calculateAgeCategoryWeights(Map<Integer, List<Participant>> categorizedParticipants, int totalTables) {

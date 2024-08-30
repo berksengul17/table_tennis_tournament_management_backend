@@ -1,5 +1,8 @@
 package com.berk.table_tennis_tournament_management_backend;
 
+import com.berk.table_tennis_tournament_management_backend.participant.Participant;
+
+import java.util.Arrays;
 import java.util.Locale;
 
 public class StringHelper {
@@ -28,5 +31,24 @@ public class StringHelper {
         }
 
         return builder.toString();
+    }
+
+    public static String formatName(Participant participant) {
+        String[] names = (participant.getFirstName().trim() + " " +
+                participant.getLastName().trim()).split(" ");
+        return formatNameArray(names);
+    }
+
+
+    public static String formatName(String name) {
+        String[] names = name.trim().split(" ");
+        return formatNameArray(names);
+    }
+
+    private static String formatNameArray(String[] names) {
+        return String.join(" ",
+                Arrays.stream(names)
+                        .map(nameItem -> StringHelper.toUpperCaseTurkish(nameItem.substring(0, 1)) +
+                                nameItem.substring(1)).toList());
     }
 }

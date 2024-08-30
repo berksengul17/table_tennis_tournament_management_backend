@@ -7,7 +7,7 @@ public enum AGE {
     THIRTY_TO_THIRTY_NINE(0, "30-39"),
     THIRTY_TO_FORTY_NINE(1, "30-49"),
     FORTY_TO_FORTY_NINE(2, "40-49"),
-    FIFTY_PLUS(3, ""),
+    FIFTY_PLUS(3, "50+"),
     FIFTY_TO_FIFTY_NINE (4, "50-59"),
     SIXTY_PLUS(5, "60+"),
     SIXTY_TO_SIXTY_FOUR(6, "60-64"),
