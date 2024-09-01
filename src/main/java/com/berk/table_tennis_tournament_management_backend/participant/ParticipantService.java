@@ -103,9 +103,9 @@ public class ParticipantService {
         if (participant == null) {
             throw new IllegalArgumentException("Participant not found");
         }
-
+        //FIXME double için de işlem yapmak gerekebilir.
         ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
-                .findByParticipant(participant);
+                .findSingleByParticipant(participant);
         List<Match> matches = matchRepository.findAllByParticipant(participant);
 
         // delete all matches where the participant is involved

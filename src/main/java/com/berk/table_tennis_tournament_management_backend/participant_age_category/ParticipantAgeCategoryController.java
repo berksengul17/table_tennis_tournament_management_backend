@@ -19,6 +19,12 @@ public class ParticipantAgeCategoryController {
         return participantAgeCategoryService.getParticipantAgeCategory(categoryVal, ageVal);
     }
 
+    @GetMapping("get-participant/{id}")
+    public ParticipantAgeCategoryDTO getParticipantAgeCategory(@PathVariable Long id) {
+        return participantAgeCategoryService.getParticipant(id);
+
+    }
+
     @PutMapping("/update-participant/{id}")
     public ResponseEntity<?> updateParticipant(@PathVariable Long id,
                                             @RequestBody ParticipantAgeCategoryDTO participantAgeCategoryDTO) {

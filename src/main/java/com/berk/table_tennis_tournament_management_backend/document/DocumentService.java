@@ -574,7 +574,7 @@ public class DocumentService {
             ParticipantAgeCategory participantAgeCategory = null;
             if (isJoiningDoubles) {
                 participantAgeCategory =
-                        participantAgeCategoryRepository.findByParticipant(participant);
+                        participantAgeCategoryRepository.findDoubleByParticipant(participant);
             }
             String fullName = StringHelper.formatName(participant);
             // Add Sıra No. (Row Number)

@@ -3,10 +3,18 @@ package com.berk.table_tennis_tournament_management_backend.participant_age_cate
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
 public interface ParticipantAgeCategoryRepository extends JpaRepository<ParticipantAgeCategory, Long> {
-    ParticipantAgeCategory findByParticipant(Participant participant);
+    @Query("select pa " +
+            "from ParticipantAgeCategory pa " +
+            "where pa.participant = :participant and pa.pairName = ''")
+    ParticipantAgeCategory findSingleByParticipant(Participant participant);
+    @Query("select pa " +
+            "from ParticipantAgeCategory pa " +
+            "where pa.participant = :participant and pa.pairName <> ''")
+    ParticipantAgeCategory findDoubleByParticipant(Participant participant);
     List<ParticipantAgeCategory> findAllByAgeCategory(AgeCategory ageCategory);
 }

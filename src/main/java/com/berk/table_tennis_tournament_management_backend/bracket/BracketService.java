@@ -2,6 +2,7 @@ package com.berk.table_tennis_tournament_management_backend.bracket;
 
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
+import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
@@ -9,6 +10,7 @@ import com.berk.table_tennis_tournament_management_backend.participant_age_categ
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.round.Round;
 import com.berk.table_tennis_tournament_management_backend.round.RoundRepository;
+import com.berk.table_tennis_tournament_management_backend.round.RoundSeedResponse;
 import com.berk.table_tennis_tournament_management_backend.seed.Seed;
 import com.berk.table_tennis_tournament_management_backend.seed.SeedRepository;
 import com.berk.table_tennis_tournament_management_backend.seed_participant.SeedParticipant;
@@ -17,7 +19,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -44,21 +45,6 @@ public class BracketService {
                 AGE.valueOf(age),
                 BRACKET_TYPE.LOSERS);
     }
-
-//        List<Round> rounds = bracket.getRounds();
-//
-//        if (rounds == null) return null;
-//
-//        List<Round> foundRounds = rounds
-//                .stream()
-//                .filter(r -> Objects.equals(r.getId(), roundId))
-//                .toList();
-//
-//        if (foundRounds.isEmpty()) return null;
-//        Round round = foundRounds.get(0);
-//
-//        int index = rounds.indexOf(round);
-//        if (index == -1) return null;
 
     public Bracket advanceToNextRound(Long participantId, Long bracketId, Long roundId) {
         Bracket bracket = bracketRepository.findById(bracketId).orElse(null);
@@ -102,53 +88,9 @@ public class BracketService {
             sp.setPIndex(0);
         }
 
-//        if (isLowerSeed) {
-//            nextRoundSeedParticipants.add(participant);
-//        } else if (isLowerSeed && nextRoundSeedParticipants.isEmpty()) {
-//            nextRoundSeedParticipants.add(null);
-//            nextRoundSeedParticipants.add(participant);
-//        } else if (!isLowerSeed && nextRoundSeedParticipants.size() == 1) {
-//            nextRoundSeedParticipants.add(nextRoundSeedParticipants.get(0));
-//            nextRoundSeedParticipants.set(0, participant);
-//        } else if (!isLowerSeed && nextRoundSeedParticipants.isEmpty()) {
-//            nextRoundSeedParticipants.add(participant);
-//        } else {
-//            nextRoundSeedParticipants.set(isLowerSeed ? 1 : 0, participant);
-//        }
-
         roundRepository.save(nextRound);
         return bracketRepository.save(bracket);
     }
-
-//    public Bracket createWinnersBracket(int categoryVal, int ageVal) {
-//        AGE_CATEGORY category = AGE_CATEGORY.valueOf(categoryVal);
-//        AGE age = AGE.valueOf(ageVal);
-//
-//        List<Participant> participants = participantAgeCategoryRepository
-//            .findAllByAgeCategory(ageCategoryRepository.findByAgeAndCategory(age, category))
-//            .stream()
-//            .map(ParticipantAgeCategory::getParticipant)
-//            .filter(participant -> participant.getGroupRanking() == 1 ||
-//                    participant.getGroupRanking() == 2)
-//            .sorted(Comparator.comparingLong(p -> p.getGroup().getId()))
-//            .sorted(Comparator.comparingInt(Participant::getGroupRanking))
-//            .toList();
-//
-//        Bracket bracket = new Bracket();
-//
-//        int bracketSize = participants.size();
-//
-//        while (bracketSize > 2) {
-//
-//            if (bracketSize % 2 != 0) {
-//                bracketSize -= 1;
-//            }
-//
-//            bracketSize /= 2;
-//        }
-//
-//        return bracket;
-//    }
 
     public Bracket createWinnersBracket(int categoryVal, int ageVal) {
         AGE_CATEGORY category = AGE_CATEGORY.valueOf(categoryVal);
@@ -164,52 +106,89 @@ public class BracketService {
                 .sorted(Comparator.comparingInt(Participant::getGroupRanking))
                 .toList();
 
-        int upperBracketParticipantCount = (int) Math.ceil(participants.size() / 2.0);
-        int lowerBracketParticipantCount = participants.size() - upperBracketParticipantCount;
-
         Bracket bracket = new Bracket(BRACKET_TYPE.WINNERS);
-        bracket.setAgeCategory(ageCategoryRepository.findByAgeAndCategory(age, category));
+        AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
+        bracket.setAgeCategory(ageCategory);
         bracketRepository.save(bracket);
-
-        List<Round> allRounds = new ArrayList<>();
-        for (int i=calculatePerfectParticipantSize(participants.size()) / 2; i>=1; i=i/2) {
-            Round round = new Round(bracket);
-            List<Seed> seeds = new ArrayList<>();
-            for (int j = 0; j < i; j++) {
-//                Collections.nCopies(2, null)
-                seeds.add(new Seed());
-            }
-            round.setSeeds(seeds);
-            seedRepository.saveAll(seeds);
-            allRounds.add(round);
+        Round firstRound = new Round(bracket);
+        List<Seed> seeds = new ArrayList<>();
+        for (int i = 0; i < participants.size(); i++) {
+            Seed seed = new Seed();
+            seedRepository.save(seed);
+            seeds.add(seed);
+            SeedParticipant seedParticipant = new SeedParticipant(seed, participants.get(i), 0);
+            seedParticipantRepository.save(seedParticipant);
         }
-
-        roundRepository.saveAll(allRounds);
-        Round firstRound = allRounds.get(0);
-        List<Seed> firstRoundSeeds = firstRound.getSeeds();
-        int firstRoundSeedSize = firstRoundSeeds.size();
-
-        List<Seed> upperSeeds = createSeeds(firstRoundSeeds.subList(0, firstRoundSeedSize / 2),
-                upperBracketParticipantCount, 0, participants);
-        List<Seed> lowerSeeds = createSeeds(firstRoundSeeds.subList(firstRoundSeedSize / 2, firstRoundSeedSize),
-                lowerBracketParticipantCount, 1, participants);
-
-        List<Seed> seeds = new ArrayList<>(upperSeeds);
-        seeds.addAll(lowerSeeds);
-        seedRepository.saveAll(seeds);
 
         firstRound.setSeeds(seeds);
+        roundRepository.save(firstRound);
 
-        bracket.setRounds(allRounds);
-        for (Seed seed : firstRound.getSeeds()) {
-            List<Participant> seedParticipants = seedParticipantRepository.findAllBySeed(seed)
-                    .stream().map(SeedParticipant::getParticipant).toList();
-            if (seedParticipants.contains(null)) {
-                advanceToNextRound(seedParticipants.get(0).getId(), bracket.getId(), firstRound.getId());
-            }
-        }
+        List<Round> rounds = new ArrayList<>();
+        rounds.add(firstRound);
+        bracket.setRounds(rounds);
 
         return bracketRepository.save(bracket);
+    }
+
+    public RoundSeedResponse connectSeeds(Long firstSeedId, Long secondSeedId) {
+        Seed firstSeed = seedRepository.findById(firstSeedId).orElse(null);
+        Seed secondSeed = seedRepository.findById(secondSeedId).orElse(null);
+        if (firstSeed == null || secondSeed == null) return null;
+
+        Round round = roundRepository.findBySeed(firstSeed);
+        if (round == null) return null;
+
+        Bracket bracket = round.getBracket();
+        List<Round> rounds = bracket.getRounds();
+        boolean isFirstSeedLower = firstSeedId < secondSeedId;
+
+        List<SeedParticipant> firstSeedParticipants = seedParticipantRepository.findAllBySeedId(firstSeedId);
+        List<SeedParticipant> secondSeedParticipants = seedParticipantRepository.findAllBySeedId(secondSeedId);
+
+        handleSeedParticipants(
+                isFirstSeedLower ? firstSeedParticipants : secondSeedParticipants,
+                isFirstSeedLower ? secondSeedParticipants : firstSeedParticipants,
+                isFirstSeedLower ? firstSeed : secondSeed
+        );
+
+        removeSeedFromRound(round, isFirstSeedLower ? secondSeed : firstSeed, isFirstSeedLower ? secondSeedId : firstSeedId);
+
+        Long nextRoundId = null;
+        nextRoundId = createNextRound(bracket, rounds, round);
+
+        Long seedId = isFirstSeedLower ? firstSeedId : secondSeedId;
+        return new RoundSeedResponse(nextRoundId, seedId);
+    }
+
+    private void handleSeedParticipants(List<SeedParticipant> mainSeedParticipants,
+                                        List<SeedParticipant> otherSeedParticipants, Seed mainSeed) {
+        SeedParticipant participantToMove = otherSeedParticipants.get(0);
+        participantToMove.setSeed(mainSeed);
+        participantToMove.setPIndex(1);
+        seedParticipantRepository.save(participantToMove);
+//        mainSeedParticipants.add(participantToMove);
+    }
+
+    private void removeSeedFromRound(Round round, Seed seedToRemove, Long seedIdToDelete) {
+        round.getSeeds().remove(seedToRemove);
+        roundRepository.save(round);
+        seedRepository.deleteById(seedIdToDelete);
+    }
+
+    private Long createNextRound(Bracket bracket, List<Round> rounds, Round round) {
+        int currRoundIndex = rounds.indexOf(round);
+        Round nextRound = null;
+        if (currRoundIndex == rounds.size() - 1) {
+            nextRound = new Round(bracket, new ArrayList<>());
+        } else {
+            nextRound = rounds.get(currRoundIndex + 1);
+        }
+        Seed newSeed = new Seed();
+        seedRepository.save(newSeed);
+        SeedParticipant newSeedParticipant = new SeedParticipant(newSeed);
+        seedParticipantRepository.save(newSeedParticipant);
+        nextRound.getSeeds().add(newSeed);
+        return roundRepository.save(nextRound).getId();
     }
 
     private List<Seed> createSeeds(List<Seed> seeds, int participantCount,
@@ -221,7 +200,7 @@ public class BracketService {
 
         // TODO geri kalan boşluk nasıl doldurulcak?
         int currIndex = startingIndex == 0 ? 0 : 3;
-        for (int i=0; i<seeds.size(); i++) {
+        for (int i = 0; i < seeds.size(); i++) {
             Seed seed = seeds.get(i);
             if (isSeedEmpty(seed)) {
                 // if upper bracket and the first group winner
@@ -264,7 +243,7 @@ public class BracketService {
                         currIndex = size - 3;
                     } else {
                         seedParticipantRepository.save(
-                                new SeedParticipant(seed, participants.get(size -2), 1));
+                                new SeedParticipant(seed, participants.get(size - 2), 1));
 //                        seed.getParticipants().add(participants.get(size - 2));
                         currIndex = size - 4;
                     }
@@ -317,7 +296,7 @@ public class BracketService {
                                List<Participant> participants) {
         int currIndex = startingIndex;
         int seedIndex = startingIndex == 0 ? 0 : seeds.size() - 1;
-        for (int i=0; i<numOfByes; i++) {
+        for (int i = 0; i < numOfByes; i++) {
             Participant byeParticipant = participants.get(currIndex);
             Seed currSeed = seeds.get(seedIndex);
             seedParticipantRepository.save(

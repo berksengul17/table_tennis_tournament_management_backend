@@ -1,6 +1,7 @@
 package com.berk.table_tennis_tournament_management_backend.bracket;
 
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
+import com.berk.table_tennis_tournament_management_backend.round.RoundSeedResponse;
 import com.berk.table_tennis_tournament_management_backend.seed.Seed;
 import com.berk.table_tennis_tournament_management_backend.seed_participant.SeedParticipant;
 import lombok.AllArgsConstructor;
@@ -38,5 +39,11 @@ public class BracketController {
     @GetMapping("/get-next-seed-id")
     public int getNextSeedId(@RequestParam Long seedId) {
         return bracketService.getNextSeedId(seedId);
+    }
+
+    @PostMapping("/connect-seeds")
+    public RoundSeedResponse connectSeeds(@RequestParam Long firstSeedId,
+                                          @RequestParam Long secondSeedId) {
+        return bracketService.connectSeeds(firstSeedId, secondSeedId);
     }
 }

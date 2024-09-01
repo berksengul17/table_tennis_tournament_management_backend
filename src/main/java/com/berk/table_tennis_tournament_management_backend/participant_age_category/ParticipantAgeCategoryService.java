@@ -67,6 +67,16 @@ public class ParticipantAgeCategoryService {
         return participants;
     }
 
+    public ParticipantAgeCategoryDTO getParticipant(Long id) {
+        Participant participant = participantRepository.findById(id).orElse(null);
+        ParticipantAgeCategory participantAgeCategory =
+                participantAgeCategoryRepository.findDoubleByParticipant(participant);
+        if (participant == null || participantAgeCategory == null) return null;
+        //FIXME burda direkt double çağırmak çok doğru değil gibi
+        // iki farklı method gerekebilir bunun için
+        return new ParticipantAgeCategoryDTO(participantAgeCategory);
+    }
+
     //TODO excel dosyasını güncelle
     public ParticipantAgeCategoryDTO updateParticipant(Long id,
                                                        ParticipantAgeCategoryDTO participantAgeCategoryDTO) {
