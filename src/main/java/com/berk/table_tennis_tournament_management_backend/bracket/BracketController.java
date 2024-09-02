@@ -24,6 +24,11 @@ public class BracketController {
         return bracketService.getLosersBracket(category, age);
     }
 
+    @GetMapping("/get-participant-count/{bracketId}")
+    public int getParticipantCount(@PathVariable Long bracketId) {
+        return bracketService.getFirstRoundNumOfParticipants(bracketId);
+    }
+
     @PostMapping("/create-winners-bracket/{category}/{age}")
     public Bracket createWinnersBracket(@PathVariable int category, @PathVariable int age) {
         return bracketService.createWinnersBracket(category, age);
@@ -43,7 +48,7 @@ public class BracketController {
 
     @PostMapping("/connect-seeds")
     public RoundSeedResponse connectSeeds(@RequestParam Long firstSeedId,
-                                          @RequestParam Long secondSeedId) {
+                                          @RequestParam(required = false, defaultValue = "-1") Long secondSeedId) {
         return bracketService.connectSeeds(firstSeedId, secondSeedId);
     }
 }

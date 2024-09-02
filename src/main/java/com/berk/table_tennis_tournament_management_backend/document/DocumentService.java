@@ -519,7 +519,7 @@ public class DocumentService {
     }
 
     private void addTableHeader(PdfPTable table, Font font, boolean isJoiningDouble) {
-        Stream.of("Sıra No.", "Ad-Soyad", isJoiningDouble ? "Eşi" : null,
+        Stream.of("Sıra No.", "Ad-Soyad",
                         "E-mail", "Cinsiyet", "Doğum Tarihi",
                         "Telefon Numarası", "Katıldığı Şehir", "Puan")
                 .forEach(columnTitle -> {

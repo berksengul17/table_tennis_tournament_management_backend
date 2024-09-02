@@ -46,6 +46,18 @@ public class BracketService {
                 BRACKET_TYPE.LOSERS);
     }
 
+    public int getFirstRoundNumOfParticipants(Long bracketId) {
+        Bracket bracket = bracketRepository.findById(bracketId).orElse(null);
+        int numOfParticipants = 0;
+        if (bracket == null) return numOfParticipants;
+
+        for (Seed seed : bracket.getRounds().get(0).getSeeds()) {
+            numOfParticipants += seedParticipantRepository.findAllBySeed(seed).size();
+        }
+
+        return numOfParticipants;
+    }
+
     public Bracket advanceToNextRound(Long participantId, Long bracketId, Long roundId) {
         Bracket bracket = bracketRepository.findById(bracketId).orElse(null);
         Participant participant = participantRepository.findById(participantId).orElse(null);
@@ -133,49 +145,46 @@ public class BracketService {
     public RoundSeedResponse connectSeeds(Long firstSeedId, Long secondSeedId) {
         Seed firstSeed = seedRepository.findById(firstSeedId).orElse(null);
         Seed secondSeed = seedRepository.findById(secondSeedId).orElse(null);
-        if (firstSeed == null || secondSeed == null) return null;
+        if (firstSeed == null) return null;
 
         Round round = roundRepository.findBySeed(firstSeed);
         if (round == null) return null;
 
         Bracket bracket = round.getBracket();
         List<Round> rounds = bracket.getRounds();
-        boolean isFirstSeedLower = firstSeedId < secondSeedId;
+        Seed prevSeed = firstSeed;
+        if (secondSeed != null) {
+            boolean isFirstSeedLower = firstSeedId < secondSeedId;
+            if (!isFirstSeedLower) prevSeed = secondSeed;
 
-        List<SeedParticipant> firstSeedParticipants = seedParticipantRepository.findAllBySeedId(firstSeedId);
-        List<SeedParticipant> secondSeedParticipants = seedParticipantRepository.findAllBySeedId(secondSeedId);
+            List<SeedParticipant> firstSeedParticipants = seedParticipantRepository.findAllBySeedId(firstSeedId);
+            List<SeedParticipant> secondSeedParticipants = seedParticipantRepository.findAllBySeedId(secondSeedId);
 
-        handleSeedParticipants(
-                isFirstSeedLower ? firstSeedParticipants : secondSeedParticipants,
-                isFirstSeedLower ? secondSeedParticipants : firstSeedParticipants,
-                isFirstSeedLower ? firstSeed : secondSeed
-        );
+            handleSeedParticipants(isFirstSeedLower ? secondSeedParticipants : firstSeedParticipants,
+                    isFirstSeedLower ? firstSeed : secondSeed
+            );
 
-        removeSeedFromRound(round, isFirstSeedLower ? secondSeed : firstSeed, isFirstSeedLower ? secondSeedId : firstSeedId);
+            removeSeedFromRound(round, isFirstSeedLower ? secondSeed : firstSeed);
+        }
 
-        Long nextRoundId = null;
-        nextRoundId = createNextRound(bracket, rounds, round);
-
-        Long seedId = isFirstSeedLower ? firstSeedId : secondSeedId;
-        return new RoundSeedResponse(nextRoundId, seedId);
+        return createNextRound(bracket, rounds, round, prevSeed);
     }
 
-    private void handleSeedParticipants(List<SeedParticipant> mainSeedParticipants,
-                                        List<SeedParticipant> otherSeedParticipants, Seed mainSeed) {
+    private void handleSeedParticipants(List<SeedParticipant> otherSeedParticipants, Seed mainSeed) {
         SeedParticipant participantToMove = otherSeedParticipants.get(0);
         participantToMove.setSeed(mainSeed);
         participantToMove.setPIndex(1);
         seedParticipantRepository.save(participantToMove);
-//        mainSeedParticipants.add(participantToMove);
     }
 
-    private void removeSeedFromRound(Round round, Seed seedToRemove, Long seedIdToDelete) {
+    private void removeSeedFromRound(Round round, Seed seedToRemove) {
         round.getSeeds().remove(seedToRemove);
         roundRepository.save(round);
-        seedRepository.deleteById(seedIdToDelete);
+        seedRepository.delete(seedToRemove);
     }
 
-    private Long createNextRound(Bracket bracket, List<Round> rounds, Round round) {
+    private RoundSeedResponse createNextRound(Bracket bracket, List<Round> rounds,
+                                              Round round, Seed prevSeed) {
         int currRoundIndex = rounds.indexOf(round);
         Round nextRound = null;
         if (currRoundIndex == rounds.size() - 1) {
@@ -183,12 +192,13 @@ public class BracketService {
         } else {
             nextRound = rounds.get(currRoundIndex + 1);
         }
-        Seed newSeed = new Seed();
+        Seed newSeed = new Seed(prevSeed);
         seedRepository.save(newSeed);
         SeedParticipant newSeedParticipant = new SeedParticipant(newSeed);
         seedParticipantRepository.save(newSeedParticipant);
         nextRound.getSeeds().add(newSeed);
-        return roundRepository.save(nextRound).getId();
+        roundRepository.save(nextRound);
+        return new RoundSeedResponse(nextRound.getId(), newSeed.getId());
     }
 
     private List<Seed> createSeeds(List<Seed> seeds, int participantCount,
