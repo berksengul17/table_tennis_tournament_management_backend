@@ -13,11 +13,4 @@ public class Seed {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
-    @JoinColumn(name = "prev_seed_id")
-    private Seed prevSeed;
-
-    public Seed(Seed prevSeed) {
-        this.prevSeed = prevSeed;
-    }
 }

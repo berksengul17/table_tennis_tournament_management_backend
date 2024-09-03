@@ -23,9 +23,17 @@ public class SeedParticipant {
     private Participant participant;
     private int pIndex;
     private Integer score;
+    @OneToOne
+    @JoinColumn(name = "prev_seed_id")
+    private Seed prevSeed;
 
     public SeedParticipant(Seed seed) {
         this.seed = seed;
+    }
+
+    public SeedParticipant(Seed seed, Seed prevSeed) {
+        this.seed = seed;
+        this.prevSeed = prevSeed;
     }
 
     public SeedParticipant(Seed seed, Participant participant, int pIndex) {

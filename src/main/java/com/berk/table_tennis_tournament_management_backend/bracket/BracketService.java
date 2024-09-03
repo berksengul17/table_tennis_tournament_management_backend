@@ -142,6 +142,34 @@ public class BracketService {
         return bracketRepository.save(bracket);
     }
 
+    public Bracket createLosersBracket(int categoryVal, int ageVal) {return null;}
+
+        public Bracket refreshBracket(Long bracketId) {
+        Bracket bracket = bracketRepository.findById(bracketId).orElse(null);
+        if (bracket == null) return null;
+
+        BRACKET_TYPE type = bracket.getBracketType();
+        AgeCategory category = bracket.getAgeCategory();
+
+        List<Round> rounds = bracket.getRounds();
+        List<Seed> seeds = new ArrayList<>();
+        for (Round round : rounds) {
+            seeds.addAll(round.getSeeds());
+        }
+
+        List<SeedParticipant> seedParticipants = new ArrayList<>();
+        for (Seed seed : seeds) {
+            seedParticipants.addAll(seedParticipantRepository.findAllBySeed(seed));
+        }
+
+        seedParticipantRepository.deleteAll(seedParticipants);
+        roundRepository.deleteAll(rounds);
+        seedRepository.deleteAll(seeds);
+        bracketRepository.delete(bracket);
+
+        return type == BRACKET_TYPE.WINNERS ? createWinnersBracket() : createLosersBracket();
+    }
+
     public RoundSeedResponse connectSeeds(Long firstSeedId, Long secondSeedId) {
         Seed firstSeed = seedRepository.findById(firstSeedId).orElse(null);
         Seed secondSeed = seedRepository.findById(secondSeedId).orElse(null);
@@ -192,9 +220,9 @@ public class BracketService {
         } else {
             nextRound = rounds.get(currRoundIndex + 1);
         }
-        Seed newSeed = new Seed(prevSeed);
+        Seed newSeed = new Seed();
         seedRepository.save(newSeed);
-        SeedParticipant newSeedParticipant = new SeedParticipant(newSeed);
+        SeedParticipant newSeedParticipant = new SeedParticipant(newSeed, prevSeed);
         seedParticipantRepository.save(newSeedParticipant);
         nextRound.getSeeds().add(newSeed);
         roundRepository.save(nextRound);
