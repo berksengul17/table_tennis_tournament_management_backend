@@ -29,6 +29,11 @@ public class AgeCategoryController {
         return ageCategoryService.getCategories(showDoubles);
     }
 
+    @GetMapping("/get-age-category/{category}/{age}")
+    public String getAgeCategoryString(@PathVariable int category, @PathVariable int age) {
+        return ageCategoryService.getAgeCategoryString(category, age);
+    }
+
     @GetMapping("/get-age-list")
     public List<String> getAgeListByCategoryAndGender(@RequestParam(defaultValue = "-1") int category,
                                                       @RequestParam(defaultValue = "-1") int gender) {

@@ -23,43 +23,6 @@ public class AgeCategoryService {
         this.participantService = participantService;
     }
 
-//    @Transactional
-//    public List<AgeCategory> createAgeCategories() {
-//        List<AgeCategory> ageCategories = loadAgeCategories();
-//
-//        if (!ageCategories.isEmpty()) {
-//            return ageCategories;
-//        }
-//
-//        List<Participant> participants = participantService.getParticipants();
-//
-//        for (Participant participant : participants) {
-//            AGE_CATEGORY category = participant.getAgeCategory().getCategory();
-//            AGE age = participant.getAgeCategory().getAge();
-//
-//            // Validate if the participant's age is valid for the category
-//            if (!category.ageList.contains(age)) {
-//                throw new IllegalArgumentException("Invalid age " + age + " for category " + category);
-//            }
-//
-//            AgeCategory existingCategory = ageCategories.stream()
-//                    .filter(ageCategory -> ageCategory.getCategory() == category && ageCategory.getAge() == age)
-//                    .findFirst()
-//                    .orElse(null);
-//
-//            if (existingCategory == null) {
-//                AgeCategory newCategory = new AgeCategory(category, age);
-//                newCategory.setParticipants(new ArrayList<>());
-//                newCategory.getParticipants().add(participant);
-//                ageCategories.add(newCategory);
-//            } else {
-//                existingCategory.getParticipants().add(participant);
-//            }
-//        }
-//
-//        return ageCategoryRepository.saveAll(ageCategories);
-//    }
-
     public List<AgeCategory> loadAgeCategories() {
         return ageCategoryRepository.findAll();
     }
@@ -75,6 +38,13 @@ public class AgeCategoryService {
                     .map(category -> category.label)
                     .toList();
         }
+    }
+
+    public String getAgeCategoryString(int category, int age) {
+        AGE_CATEGORY categoryEnum = AGE_CATEGORY.valueOf(category);
+        AGE ageEnum = categoryEnum.ageList.get(age);
+
+        return categoryEnum.label + " " + ageEnum.age;
     }
 
     public List<String> getAgeListByCategoryAndGender(int category, int gender) {

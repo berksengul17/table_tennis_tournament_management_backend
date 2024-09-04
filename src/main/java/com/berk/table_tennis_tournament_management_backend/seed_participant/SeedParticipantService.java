@@ -32,6 +32,12 @@ public class SeedParticipantService {
 
         Participant participant = participantRepository.findByFullName(participantName);
 
+        if (participant == null) {
+            seedParticipant.setParticipant(null);
+            seedParticipantRepository.save(seedParticipant);
+            return "";
+        }
+
         seedParticipant.setParticipant(participant);
         seedParticipantRepository.save(seedParticipant);
         return StringHelper.formatName(participant.getFullName());
