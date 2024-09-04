@@ -24,4 +24,11 @@ public class SeedParticipantController {
                                             @RequestParam int p2Score) {
         seedParticipantService.saveScores(seedId, p1Score, p2Score);
     }
+
+    @PutMapping("/save-participant")
+    public String saveParticipant(@RequestParam Long seedId,
+                                @RequestParam int pIndex,
+                                @RequestParam String participantName) {
+        return seedParticipantService.saveParticipantName(seedId, pIndex, participantName);
+    }
 }

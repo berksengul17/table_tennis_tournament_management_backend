@@ -34,16 +34,14 @@ public class BracketController {
         return bracketService.createWinnersBracket(category, age);
     }
 
-    @PutMapping("/advance-to-next-round")
-    public Bracket advanceToNextRound(@RequestParam Long participantId,
-                                      @RequestParam Long bracketId,
-                                      @RequestParam Long roundId) {
-        return bracketService.advanceToNextRound(participantId, bracketId, roundId);
+    @PostMapping("/create-losers-bracket/{category}/{age}")
+    public Bracket createLosersBracket(@PathVariable int category, @PathVariable int age) {
+        return bracketService.createLosersBracket(category, age);
     }
 
-    @GetMapping("/get-next-seed-id")
-    public int getNextSeedId(@RequestParam Long seedId) {
-        return bracketService.getNextSeedId(seedId);
+    @PostMapping("/refresh-bracket/{bracketId}")
+    public Bracket refreshBracket(@PathVariable Long bracketId) {
+        return bracketService.refreshBracket(bracketId);
     }
 
     @PostMapping("/connect-seeds")
