@@ -9,6 +9,7 @@ import com.berk.table_tennis_tournament_management_backend.group_table_time.Grou
 import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTimeRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
+import com.berk.table_tennis_tournament_management_backend.sms.SMSService;
 import com.berk.table_tennis_tournament_management_backend.table.Table;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class MatchService {
     private final MatchRepository matchRepository;
     private final GroupTableTimeRepository groupTableTimeRepository;
     private final AgeCategoryRepository ageCategoryRepository;
+    private final SMSService smsService;
 
     public List<List<Match>> getMatches(int category, int age) {
         AGE_CATEGORY categoryEnum = AGE_CATEGORY.valueOf(category);
@@ -104,6 +106,7 @@ public class MatchService {
             // FIXME: 5 kişi için de düşün
         }
 
+//        smsService.sendMatchInfoSms();
         return matches;
     }
 
