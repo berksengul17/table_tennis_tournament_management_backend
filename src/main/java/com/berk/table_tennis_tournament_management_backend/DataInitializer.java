@@ -4,7 +4,6 @@ import com.berk.table_tennis_tournament_management_backend.age_category.AGE;
 import com.berk.table_tennis_tournament_management_backend.age_category.AGE_CATEGORY;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategory;
 import com.berk.table_tennis_tournament_management_backend.age_category.AgeCategoryRepository;
-import com.berk.table_tennis_tournament_management_backend.group_table_time.GroupTableTimeRepository;
 import com.berk.table_tennis_tournament_management_backend.participant.GENDER;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
@@ -65,9 +64,40 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+//        createAllValidAgeCategoryCombinations();
+//        assignAgeCategories();
+//        registerToSuperOpen();
 //        initializeTimeData();
 //        initializeTableData();
 //        initializeTableTimeData();
+    }
+
+    private void registerToSuperOpen() {
+        List<Participant> participants = participantRepository.findAll();
+        for (Participant participant : participants) {
+            ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory(
+                    ageCategoryRepository.findByAgeAndCategory(AGE.NO_AGE, AGE_CATEGORY.SUPER_OPEN),
+                    participant,
+                     ""
+            );
+
+            participantAgeCategoryRepository.save(participantAgeCategory);
+        }
+    }
+
+    private void assignAgeCategories() {
+        List<Participant> participants = participantRepository.findAll();
+        for (Participant participant : participants) {
+            ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory();
+            participantAgeCategory.setParticipant(participant);
+            participantAgeCategory.setPairName("");
+            calculateAgeCategory(participantAgeCategory,
+                    participant.getBirthDate(),
+                    participant.getGender() == GENDER.MALE ?
+                            AGE_CATEGORY.SINGLE_MEN :
+                            AGE_CATEGORY.SINGLE_WOMEN);
+            participantAgeCategoryRepository.save(participantAgeCategory);
+        }
     }
 
     private void initializeTimeData() {
@@ -82,7 +112,7 @@ public class DataInitializer implements CommandLineRunner {
 //        while (startTime.isBefore(endTime)) {
 //            timeRepository.save(
 //                    new Time(startTime,
-//                            startTime.plusHours(2)));
+//                           startTime.plusHours(2)));
 //            startTime = startTime.plusHours(2);
 //        }
     }

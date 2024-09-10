@@ -70,8 +70,6 @@ public class AgeCategoryService {
     }
 
     public boolean isDouble(AGE_CATEGORY category) {
-        return Arrays.asList(AGE_CATEGORY.DOUBLE_MEN,
-                AGE_CATEGORY.DOUBLE_WOMEN,
-                AGE_CATEGORY.MIX).contains(category);
+        return AGE_CATEGORY.DOUBLE_OPEN == category;
     }
 }

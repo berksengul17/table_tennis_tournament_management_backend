@@ -12,9 +12,15 @@ public enum AGE {
     SIXTY_PLUS(5, "60+"),
     SIXTY_TO_SIXTY_FOUR(6, "60-64"),
     SIXTY_FIVE_TO_SIXTY_NINE(7, "65-69"),
-    SEVENTY_PLUS(8, "65+"),
+    SEVENTY_PLUS(8, "70+"),
     SEVENTY_TO_SEVENTY_FOUR(9, "70-74"),
-    SEVENTY_FIVE_PLUS(10, "75+");
+    SEVENTY_FIVE_PLUS(10, "75+"),
+    FIFTY_TO_SIXTY_NINE(11, "50-69"),
+    THIRTY_TO_SIXTY_FOUR(12, "30-64"),
+    SIXTY_FIVE_PLUS(13, "65+"),
+    THIRTY_TO_FIFTY_THREE(14, "30-53"),
+    FIFTY_FOUR_PLUS(15, "54+"),
+    NO_AGE(16, "");
 
     public final int value;
     public final String age;

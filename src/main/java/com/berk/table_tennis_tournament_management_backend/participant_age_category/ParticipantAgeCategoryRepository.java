@@ -17,4 +17,10 @@ public interface ParticipantAgeCategoryRepository extends JpaRepository<Particip
             "where pa.participant = :participant and pa.pairName <> ''")
     ParticipantAgeCategory findDoubleByParticipant(Participant participant);
     List<ParticipantAgeCategory> findAllByAgeCategory(AgeCategory ageCategory);
+    ParticipantAgeCategory findByAgeCategoryAndParticipant(AgeCategory ageCategory, Participant participant);
+
+    @Query("select pa " +
+            "from ParticipantAgeCategory pa " +
+            "where lower(pa.pairName) = lower(:pairName)")
+    ParticipantAgeCategory findByPairName(String pairName);
 }

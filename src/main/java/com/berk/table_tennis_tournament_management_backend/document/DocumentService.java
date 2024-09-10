@@ -558,11 +558,13 @@ public class DocumentService {
     private void addTableHeaderGroup(PdfPTable table, Font font, boolean isDouble) {
         Stream.of("Sıra No.", "Ad-Soyad", isDouble ? "Eşi" : null)
                 .forEach(columnTitle -> {
-                    PdfPCell header = new PdfPCell();
-                    header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-                    header.setBorderWidth(1);
-                    header.setPhrase(new Phrase(columnTitle, font));
-                    table.addCell(header);
+                    if (columnTitle != null) {
+                        PdfPCell header = new PdfPCell();
+                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                        header.setBorderWidth(1);
+                        header.setPhrase(new Phrase(columnTitle, font));
+                        table.addCell(header);
+                    }
                 });
     }
 
@@ -582,7 +584,7 @@ public class DocumentService {
             table.addCell(cell1);
 
             // Add Ad-Soyad (Full Name)
-            PdfPCell cell2 = new PdfPCell(new Phrase(fullName, font));
+            PdfPCell cell2 = new PdfPCell(new Phrase(fullName + " - " + participant.getCity(), font));
             table.addCell(cell2);
 
             if (participantAgeCategory != null) {
@@ -619,16 +621,6 @@ public class DocumentService {
                 case SIXTY_PLUS:
                     return "J";
             }
-        } else if (category == AGE_CATEGORY.DOUBLE_MEN) {
-            switch(age) {
-                case FIFTY_TO_FIFTY_NINE: return "A";
-                case FORTY_TO_FORTY_NINE: return "B";
-                case SEVENTY_PLUS: return "D";
-                case THIRTY_TO_THIRTY_NINE: return "E";
-                case SIXTY_TO_SIXTY_FOUR: return "F";
-            }
-        } else if (category == AGE_CATEGORY.DOUBLE_WOMEN) {
-            return "K";
         }
 
         return "";

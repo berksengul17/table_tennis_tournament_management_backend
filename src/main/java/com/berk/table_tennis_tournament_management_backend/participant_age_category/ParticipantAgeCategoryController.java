@@ -35,4 +35,9 @@ public class ParticipantAgeCategoryController {
             return ResponseEntity.internalServerError().body(e.getMessage());
         }
     }
+
+    @DeleteMapping("/remove-from-age-category/{participantAgeCategoryId}")
+    public void removeFromAgeCategory(@PathVariable long participantAgeCategoryId) {
+        participantAgeCategoryService.removeParticipantFromAgeCategory(participantAgeCategoryId);
+    }
 }

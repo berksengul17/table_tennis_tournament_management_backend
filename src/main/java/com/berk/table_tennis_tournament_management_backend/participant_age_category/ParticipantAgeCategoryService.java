@@ -46,7 +46,11 @@ public class ParticipantAgeCategoryService {
             AgeCategory ageCategory = participantAgeCategory.getAgeCategory();
             if (ageCategory == null ||
                     (category != null && ageCategory.getCategory() != category) ||
-                    (age != null && ageCategory.getAge() != age)) continue;
+                    (age != null && ageCategory.getAge() != age) ||
+                    (category == null &&
+                            (participantAgeCategory.getAgeCategory().getCategory() == AGE_CATEGORY.SUPER_OPEN ||
+                                    participantAgeCategory.getAgeCategory().getCategory() == AGE_CATEGORY.MEN_OPEN ||
+                                    participantAgeCategory.getAgeCategory().getCategory() == AGE_CATEGORY.WOMEN_OPEN))) continue;
             participants.add(new ParticipantAgeCategoryDTO(
                     participantAgeCategory.getId(),
                     participant.getFirstName(),
@@ -153,5 +157,15 @@ public class ParticipantAgeCategoryService {
 //        ExcelHelper.editRow(participantAgeCategory, false);
 
         return new ParticipantAgeCategoryDTO(participantAgeCategory);
+    }
+
+    public void removeParticipantFromAgeCategory(long participantAgeCategoryId) {
+        ParticipantAgeCategory participantAgeCategory =
+                participantAgeCategoryRepository.findById(participantAgeCategoryId).orElse(null);
+
+        if (participantAgeCategory == null) return;
+
+        participantAgeCategory.getParticipant().setGroup(null);
+        participantAgeCategoryRepository.deleteById(participantAgeCategoryId);
     }
 }

@@ -34,33 +34,51 @@ public class BracketService {
     private final SeedParticipantRepository seedParticipantRepository;
 
     public Bracket getWinnersBracket(int category, int age) {
+        AGE_CATEGORY categoryEnum = AGE_CATEGORY.valueOf(category);
+        AGE ageEnum = categoryEnum.ageList.get(age);
         return bracketRepository.findByAgeCategory_CategoryAndAgeCategory_AgeAndBracketType(
-                AGE_CATEGORY.valueOf(category),
-                AGE.valueOf(age),
+                categoryEnum,
+                ageEnum,
                 BRACKET_TYPE.WINNERS);
     }
 
     public Bracket getLosersBracket(int category, int age) {
+        AGE_CATEGORY categoryEnum = AGE_CATEGORY.valueOf(category);
+        AGE ageEnum = categoryEnum.ageList.get(age);
         return bracketRepository.findByAgeCategory_CategoryAndAgeCategory_AgeAndBracketType(
-                AGE_CATEGORY.valueOf(category),
-                AGE.valueOf(age),
+                categoryEnum,
+                ageEnum,
                 BRACKET_TYPE.LOSERS);
     }
 
     public Bracket createWinnersBracket(int categoryVal, int ageVal) {
-        return createBracket(categoryVal, ageVal, BRACKET_TYPE.WINNERS, List.of(1, 2));
+        AGE_CATEGORY category = AGE_CATEGORY.valueOf(categoryVal);
+        AGE age = category.ageList.get(ageVal);
+
+        AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
+
+        return createBracket(ageCategory, BRACKET_TYPE.WINNERS, List.of(1, 2));
+    }
+
+    public Bracket createWinnersBracket(AgeCategory ageCategory) {
+        return createBracket(ageCategory, BRACKET_TYPE.WINNERS, List.of(1, 2));
     }
 
     public Bracket createLosersBracket(int categoryVal, int ageVal) {
-        return createBracket(categoryVal, ageVal, BRACKET_TYPE.LOSERS, List.of(3, 4));
+        AGE_CATEGORY category = AGE_CATEGORY.valueOf(categoryVal);
+        AGE age = category.ageList.get(ageVal);
+
+        AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
+
+        return createBracket(ageCategory, BRACKET_TYPE.LOSERS, List.of(3, 4));
     }
 
-    private Bracket createBracket(int categoryVal, int ageVal, BRACKET_TYPE bracketType, List<Integer> groupRankings) {
-        AGE_CATEGORY category = AGE_CATEGORY.valueOf(categoryVal);
-        AGE age = AGE.valueOf(ageVal);
-
+    public Bracket createLosersBracket(AgeCategory ageCategory) {
+        return createBracket(ageCategory, BRACKET_TYPE.LOSERS, List.of(3, 4));
+    }
+    private Bracket createBracket(AgeCategory ageCategory, BRACKET_TYPE bracketType, List<Integer> groupRankings) {
         List<Participant> participants = participantAgeCategoryRepository
-                .findAllByAgeCategory(ageCategoryRepository.findByAgeAndCategory(age, category))
+                .findAllByAgeCategory(ageCategory)
                 .stream()
                 .map(ParticipantAgeCategory::getParticipant)
                 .filter(participant -> groupRankings.contains(participant.getGroupRanking()))
@@ -69,7 +87,6 @@ public class BracketService {
                 .toList();
 
         Bracket bracket = new Bracket(bracketType);
-        AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
         bracket.setAgeCategory(ageCategory);
         bracketRepository.save(bracket);
 
@@ -98,7 +115,7 @@ public class BracketService {
         if (bracket == null) return null;
 
         BRACKET_TYPE type = bracket.getBracketType();
-        AgeCategory category = bracket.getAgeCategory();
+        AgeCategory ageCategory = bracket.getAgeCategory();
 
         List<Round> rounds = bracket.getRounds();
         List<Seed> seeds = new ArrayList<>();
@@ -116,10 +133,8 @@ public class BracketService {
         seedRepository.deleteAll(seeds);
         bracketRepository.delete(bracket);
 
-        return type == BRACKET_TYPE.WINNERS ? createWinnersBracket(category.getCategory().value,
-                                                                    category.getAge().value) :
-                                                createLosersBracket(category.getCategory().value,
-                                                                    category.getAge().value);
+        return type == BRACKET_TYPE.WINNERS ? createWinnersBracket(ageCategory) :
+                                                createLosersBracket(ageCategory);
     }
 
     public RoundSeedResponse connectSeeds(Long firstSeedId, Long secondSeedId) {

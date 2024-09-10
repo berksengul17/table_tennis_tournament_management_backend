@@ -10,13 +10,18 @@ public enum AGE_CATEGORY {
             AGE.FIFTY_TO_FIFTY_NINE,
             AGE.SIXTY_TO_SIXTY_FOUR,
             AGE.SIXTY_FIVE_TO_SIXTY_NINE,
-            AGE.SEVENTY_TO_SEVENTY_FOUR,
-            AGE.SEVENTY_FIVE_PLUS))),
+            AGE.SEVENTY_PLUS))),
 
-    SINGLE_WOMEN(1, "Tek Kadın", new ArrayList<>(Arrays.asList(AGE.THIRTY_TO_FORTY_NINE,
-            AGE.FIFTY_TO_FIFTY_NINE,
-            AGE.SIXTY_PLUS))),
+    SINGLE_WOMEN(1, "Tek Kadın", new ArrayList<>(Arrays.asList(AGE.THIRTY_TO_FIFTY_THREE,
+            AGE.FIFTY_FOUR_PLUS))),
 
+    MEN_OPEN(2, "Erkek Open", new ArrayList<>(List.of(AGE.NO_AGE))),
+    WOMEN_OPEN(3, "Kadın Open", new ArrayList<>(List.of(AGE.NO_AGE))),
+    SUPER_OPEN(4, "Süper Open", new ArrayList<>(List.of(AGE.NO_AGE))),
+    DOUBLE_OPEN(5, "Çiftler Open", new ArrayList<>(Arrays.asList(AGE.THIRTY_TO_FORTY_NINE,
+            AGE.FIFTY_TO_SIXTY_NINE,
+            AGE.SEVENTY_PLUS)));
+    /*
     DOUBLE_MEN(2, "Çift Erkek", new ArrayList<>(Arrays.asList(AGE.THIRTY_TO_THIRTY_NINE,
             AGE.FORTY_TO_FORTY_NINE,
             AGE.FIFTY_TO_FIFTY_NINE,
@@ -28,7 +33,7 @@ public enum AGE_CATEGORY {
             AGE.FIFTY_PLUS))),
 
     MIX(4, "Karışık", new ArrayList<>(Arrays.asList(AGE.THIRTY_TO_FORTY_NINE,
-            AGE.FIFTY_PLUS)));
+            AGE.FIFTY_PLUS)));*/
 
     public final int value;
     public final String label;
@@ -55,10 +60,10 @@ public enum AGE_CATEGORY {
     }
 
     public static List<AGE_CATEGORY> getMenCategoryList() {
-        return Arrays.asList(SINGLE_MEN, DOUBLE_MEN, MIX);
+        return Arrays.asList(SINGLE_MEN, MEN_OPEN, DOUBLE_OPEN);
     }
     public static List<AGE_CATEGORY> getWomenCategoryList() {
-        return Arrays.asList(SINGLE_WOMEN, DOUBLE_WOMEN, MIX);
+        return Arrays.asList(SINGLE_WOMEN, WOMEN_OPEN, DOUBLE_OPEN);
     }
     public static List<AGE_CATEGORY> getSingleCategories() {return Arrays.asList(SINGLE_MEN, SINGLE_WOMEN);}
 }

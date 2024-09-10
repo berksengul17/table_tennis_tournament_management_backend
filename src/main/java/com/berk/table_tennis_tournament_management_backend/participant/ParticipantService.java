@@ -68,11 +68,14 @@ public class ParticipantService {
 
         GENDER gender = GENDER.valueOf(participantDTO.getGender());
 
-        if (participantDTO.getPairName() != null) {
-            Participant foundParticipant = participantRepository
-                    .findByFullName(participantDTO.getPairName());
-            if (foundParticipant == null) {
-                AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.DOUBLE_MEN : AGE_CATEGORY.DOUBLE_WOMEN;
+        if (participantDTO.getPairName() != null &&
+            !participantDTO.getPairName().isEmpty()) {
+            // create a new pair participant age category only if
+            // the current player is not someone's pair
+            ParticipantAgeCategory pairParticipantAgeCategory =
+                    participantAgeCategoryRepository.findByPairName(participant.getFullName());
+            if (pairParticipantAgeCategory == null) {
+                AGE_CATEGORY category = AGE_CATEGORY.DOUBLE_OPEN;
                 AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
                 AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
 
@@ -86,6 +89,9 @@ public class ParticipantService {
 
         AGE_CATEGORY category = gender == GENDER.MALE ? AGE_CATEGORY.SINGLE_MEN : AGE_CATEGORY.SINGLE_WOMEN;
         AGE age = calculateAgeCategory(participantDTO.getBirthDate(), category);
+        if (age == null) {
+            age = AGE.valueOf(participantDTO.getAge());
+        }
         AgeCategory ageCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
 
         ParticipantAgeCategory participantAgeCategory = new ParticipantAgeCategory(ageCategory,
@@ -96,16 +102,14 @@ public class ParticipantService {
         return new ParticipantAgeCategoryDTO(participantAgeCategory);
     }
 
-    public void deleteParticipant(Long participantId) {
-        Participant participant = participantRepository.findById(participantId)
-                .orElse(null);
+    public void deleteParticipant(Long participantAgeCategoryId) {
+        ParticipantAgeCategory participantAgeCategory =
+                participantAgeCategoryRepository.findById(participantAgeCategoryId).orElse(null);
 
-        if (participant == null) {
-            throw new IllegalArgumentException("Participant not found");
-        }
+        if (participantAgeCategory == null) return;
+
+        Participant participant = participantAgeCategory.getParticipant();
         //FIXME double için de işlem yapmak gerekebilir.
-        ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
-                .findSingleByParticipant(participant);
         List<Match> matches = matchRepository.findAllByParticipant(participant);
 
         // delete all matches where the participant is involved
@@ -113,7 +117,6 @@ public class ParticipantService {
 
         participantAgeCategoryRepository.delete(participantAgeCategory);
         participantRepository.deleteById(participant.getId());
-
     }
 
     public List<AgeCategoryWeight> calculateAgeCategoryWeights(Map<Integer, List<Participant>> categorizedParticipants, int totalTables) {
@@ -186,8 +189,8 @@ public class ParticipantService {
         return null;
     }
 
-    private long calculateAge(LocalDate birthDate) {
+    private int calculateAge(LocalDate birthDate) {
         LocalDate now = LocalDate.now();
-        return ChronoUnit.YEARS.between(birthDate, now);
+        return now.getYear() - birthDate.getYear();
     }
 }
