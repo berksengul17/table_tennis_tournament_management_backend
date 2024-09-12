@@ -41,7 +41,8 @@ public class StringHelper {
 
 
     public static String formatName(String name) {
-        String[] names = name.trim().split(" ");
+        String[] names = Arrays.stream(name.trim().split(" "))
+                .filter(nameItem -> !nameItem.isEmpty()).toArray(String[]::new);
         return formatNameArray(names);
     }
 

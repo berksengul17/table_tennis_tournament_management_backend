@@ -39,4 +39,9 @@ public class AgeCategoryController {
                                                       @RequestParam(defaultValue = "-1") int gender) {
         return ageCategoryService.getAgeListByCategoryAndGender(category, gender);
     }
+
+    @GetMapping("/is-double")
+    public boolean isDouble(@RequestParam String category) {
+        return ageCategoryService.isDouble(category);
+    }
 }

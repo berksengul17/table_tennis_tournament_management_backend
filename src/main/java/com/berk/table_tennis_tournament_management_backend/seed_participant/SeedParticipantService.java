@@ -30,7 +30,8 @@ public class SeedParticipantService {
 
         if (seedParticipant == null) return "";
 
-        Participant participant = participantRepository.findByFullName(participantName);
+        Participant participant = participantRepository
+                .findByFullName(StringHelper.toLowerCaseTurkish(participantName));
 
         if (participant == null) {
             seedParticipant.setParticipant(null);

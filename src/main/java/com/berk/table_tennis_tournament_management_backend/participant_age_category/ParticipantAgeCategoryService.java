@@ -50,7 +50,8 @@ public class ParticipantAgeCategoryService {
                     (category == null &&
                             (participantAgeCategory.getAgeCategory().getCategory() == AGE_CATEGORY.SUPER_OPEN ||
                                     participantAgeCategory.getAgeCategory().getCategory() == AGE_CATEGORY.MEN_OPEN ||
-                                    participantAgeCategory.getAgeCategory().getCategory() == AGE_CATEGORY.WOMEN_OPEN))) continue;
+                                    participantAgeCategory.getAgeCategory().getCategory() == AGE_CATEGORY.WOMEN_OPEN ||
+                                    participantAgeCategory.getAgeCategory().getCategory() == AGE_CATEGORY.DOUBLE_OPEN))) continue;
             participants.add(new ParticipantAgeCategoryDTO(
                     participantAgeCategory.getId(),
                     participant.getFirstName(),
@@ -81,7 +82,6 @@ public class ParticipantAgeCategoryService {
         return new ParticipantAgeCategoryDTO(participantAgeCategory);
     }
 
-    //TODO excel dosyasını güncelle
     public ParticipantAgeCategoryDTO updateParticipant(Long id,
                                                        ParticipantAgeCategoryDTO participantAgeCategoryDTO) {
         ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
@@ -131,30 +131,27 @@ public class ParticipantAgeCategoryService {
             participantService.updateRating(participant);
         }
 
-        AgeCategory DTOAgeCategory = ageCategoryRepository.findByAgeAndCategory(
+        AgeCategory ageCategoryDTO = ageCategoryRepository.findByAgeAndCategory(
                 AGE.getByAge(participantAgeCategoryDTO.getAge()),
                 AGE_CATEGORY.getByLabel(participantAgeCategoryDTO.getCategory())
         );
 
-        if (DTOAgeCategory == null) {
+        if (ageCategoryDTO == null) {
             AGE_CATEGORY category = participant.getGender() == GENDER.MALE ?
                     AGE_CATEGORY.SINGLE_MEN :
                     AGE_CATEGORY.SINGLE_WOMEN;
             AGE age = category.ageList.get(0);
 
-            DTOAgeCategory = ageCategoryRepository.findByAgeAndCategory(age, category);
+            ageCategoryDTO = ageCategoryRepository.findByAgeAndCategory(age, category);
         }
 
-        participantAgeCategory.setAgeCategory(DTOAgeCategory);
+        participantAgeCategory.setAgeCategory(ageCategoryDTO);
 
         participantAgeCategory.setPairName(participantAgeCategoryDTO.getPairName());
 
         participantRepository.save(participant);
         ageCategoryRepository.save(ageCategory);
         participantAgeCategoryRepository.save(participantAgeCategory);
-
-        CSVHelper.editLine(participantAgeCategory);
-//        ExcelHelper.editRow(participantAgeCategory, false);
 
         return new ParticipantAgeCategoryDTO(participantAgeCategory);
     }

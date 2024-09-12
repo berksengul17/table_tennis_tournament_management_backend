@@ -69,7 +69,12 @@ public class AgeCategoryService {
                         .toList();
     }
 
+    public boolean isDouble(String category) {
+        AGE_CATEGORY categoryEnum = AGE_CATEGORY.valueOf(category);
+        return categoryEnum == AGE_CATEGORY.DOUBLE_OPEN;
+    }
+
     public boolean isDouble(AGE_CATEGORY category) {
-        return AGE_CATEGORY.DOUBLE_OPEN == category;
+        return category == AGE_CATEGORY.DOUBLE_OPEN;
     }
 }
