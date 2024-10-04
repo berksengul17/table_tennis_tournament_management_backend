@@ -48,6 +48,6 @@ public class Participant {
     }
 
     public String getFullName() {
-        return StringHelper.toLowerCaseTurkish(firstName + " " + lastName);
+        return StringHelper.toLowerCaseTurkish(firstName.trim() + " " + lastName.trim());
     }
 }

@@ -13,7 +13,9 @@ import com.berk.table_tennis_tournament_management_backend.match.Match;
 import com.berk.table_tennis_tournament_management_backend.match.MatchService;
 import com.berk.table_tennis_tournament_management_backend.participant.Participant;
 import com.berk.table_tennis_tournament_management_backend.participant.ParticipantComparator;
+import com.berk.table_tennis_tournament_management_backend.participant.ParticipantRepository;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategory;
+import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryDTO;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryRepository;
 import com.berk.table_tennis_tournament_management_backend.participant_age_category.ParticipantAgeCategoryService;
 import com.berk.table_tennis_tournament_management_backend.table.Table;
@@ -44,6 +46,85 @@ public class DocumentService {
     private final MatchService matchService;
     private final AgeCategoryService ageCategoryService;
     private final ParticipantAgeCategoryService participantAgeCategoryService;
+    private final ParticipantRepository participantRepository;
+
+    public byte[] createParticipantsPdf() throws DocumentException, IOException {
+        Document document = new Document();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        PdfWriter.getInstance(document, byteArrayOutputStream);
+
+        ClassPathResource resource = new ClassPathResource("static/OpenSans-Regular.ttf");
+        BaseFont baseFont = null;
+        try (InputStream inputStream = resource.getInputStream()) {
+            baseFont = BaseFont.createFont(
+                    "OpenSans-Regular.ttf",
+                    BaseFont.IDENTITY_H,
+                    BaseFont.EMBEDDED,
+                    false,
+                    inputStream.readAllBytes(),
+                    null
+            );
+            // Use the baseFont as needed
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Font font = new Font(baseFont, 12);
+
+        document.open();
+
+        List<ParticipantAgeCategoryDTO> participants = participantAgeCategoryService.getParticipantAgeCategory(null, null);
+
+        PdfPTable table = new PdfPTable(3);
+        table.setSpacingAfter(10);
+        table.setSpacingBefore(10);
+        table.setWidthPercentage(100);
+        Paragraph para = new Paragraph("Ayvalık Veteran Katılımcı Listesi",
+                new Font(baseFont, 20));
+        para.setAlignment(Element.ALIGN_CENTER);
+
+        addParticipantHeader(table, font);
+        addParticipantRow(table, font, participants);
+
+        document.add(para);
+        document.add(table);
+
+        document.close();
+
+        return byteArrayOutputStream.toByteArray();
+    }
+
+    private void addParticipantHeader(PdfPTable table, Font font) {
+        Stream.of("Sıra No.", "Ad-Soyad", "İmza")
+                .forEach(columnTitle -> {
+                        PdfPCell header = new PdfPCell();
+                        header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                        header.setBorderWidth(1);
+                        header.setPhrase(new Phrase(columnTitle, font));
+                        table.addCell(header);
+                });
+    }
+
+    private void addParticipantRow(PdfPTable table, Font font, List<ParticipantAgeCategoryDTO> participants) {
+        // Get a collator for Turkish locale
+        Collator collator = Collator.getInstance(new Locale("tr", "TR"));
+        collator.setStrength(Collator.PRIMARY);  // This ensures that accents are considered properly
+
+        // Sort participants by full name using the Turkish collator
+        participants.sort(Comparator.comparing((p) -> StringHelper.toLowerCaseTurkish(p.getFirstName().trim() + " "
+                + p.getLastName().trim()), collator));
+
+        for (int i = 0; i < participants.size(); i++) {
+            PdfPCell order = new PdfPCell(new Phrase(String.valueOf(i + 1), font));
+            String name = StringHelper.toLowerCaseTurkish(participants.get(i).getFirstName().trim() + " "
+                            + participants.get(i).getLastName().trim());
+            PdfPCell nameCell = new PdfPCell(
+                    new Phrase(StringHelper.formatName(name), font));
+            table.addCell(order);
+            table.addCell(nameCell);
+            table.addCell(new Phrase("", font));
+        }
+    }
 
     public byte[] createBracketPdf() throws DocumentException {
 
@@ -280,6 +361,47 @@ public class DocumentService {
             table.setKeepTogether(true);
             titleAndTable.add(table);
 
+            PdfPTable matchTable = new PdfPTable(6);
+            matchTable.setSpacingAfter(10);
+            matchTable.setSpacingBefore(10);
+            matchTable.setWidthPercentage(100);
+            //table.setWidths(new float[] { 3, 1, 1, 1, 1, 1 });
+
+            List<Match> matches = matchService.getGroupMatches(group);
+            //Paragraph matchTitle = new Paragraph("Maçlar:", new Font(baseFont, 14));
+            //matchTitle.setKeepTogether(true);
+            //titleAndTable.add(matchTitle);
+            for (Match match : matches) {
+                Participant p1 = match.getP1();
+                ParticipantAgeCategory p1Age = participantAgeCategoryRepository.findDoubleByParticipant(p1);
+                Participant p2 = match.getP2();
+                ParticipantAgeCategory p2Age = participantAgeCategoryRepository.findDoubleByParticipant(p2);
+                String p1Name = StringHelper.upperCaseFirstLetter(match.getP1().getFullName());
+                String p2Name = StringHelper.upperCaseFirstLetter(match.getP2().getFullName());
+
+                Stream.of("Sporcular", "1. set", "2. set", "3. set", "4. set", "5.set")
+                        .forEach(columnTitle -> {
+                            PdfPCell header = new PdfPCell();
+                            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                            header.setBorderWidth(1);
+                            header.setPhrase(new Phrase(columnTitle, font));
+                            header.setHorizontalAlignment(Element.ALIGN_CENTER);
+                            matchTable.addCell(header);
+                        });
+
+                PdfPCell nameCell = new PdfPCell(
+                        new Phrase(p1Name + " - " + p2Name, font));
+                matchTable.addCell(nameCell);
+                matchTable.addCell(new PdfPCell(new Phrase("")));
+                matchTable.addCell(new PdfPCell(new Phrase("")));
+                matchTable.addCell(new PdfPCell(new Phrase("")));
+                matchTable.addCell(new PdfPCell(new Phrase("")));
+                matchTable.addCell(new PdfPCell(new Phrase("")));
+            }
+
+            matchTable.setKeepTogether(true);
+            titleAndTable.add(matchTable);
+
             // Add the wrapper to the document
             document.add(titleAndTable);
         }
@@ -390,8 +512,8 @@ public class DocumentService {
                                        boolean createEmpty,
                                        Font font) {
         int participantCount = participants.size();
-
-        for (int i = 0; i < 4; i++) {  // Loop over the maximum number of participants (4)
+        participants.sort((p1, p2) -> p1.getGroupRanking() > p2.getGroupRanking() ? 1 : -1);
+        for (int i = 0; i < 5; i++) {  // Loop over the maximum number of participants (4)
             if (i < participantCount) {
                 Participant participant = participants.get(i);
                 String fullName = StringHelper.formatName(participant);
@@ -405,10 +527,11 @@ public class DocumentService {
                     score = matchService.calculateScore(numOfWins, numOfLoses);
                 }
 
+                ParticipantAgeCategory participantAgeCategory = participantAgeCategoryRepository
+                        .findDoubleByParticipant(participant);
+
                 String name = fullName + "(" + city + ")" + " - " + rating;
-                //if (participant.getPair() != null && !participant.getPair().isEmpty()) {
-                //    name = fullName + " - " + participant.getPair();
-                //}
+                //String name = fullName + " - " + participantAgeCategory.getPairName();
 
                 PdfPCell nameCell = new PdfPCell(
                         new Phrase(name, font));
@@ -456,13 +579,13 @@ public class DocumentService {
                 table.addCell(pCell);
 
                 // TODO BUNU NEREYE KOYABİLİRİM?
-                List<Participant> groupParticipants = participant.getGroup().getParticipants();
+               List<Participant> groupParticipants = participant.getGroup().getParticipants();
                 List<Integer> scores = new ArrayList<>();
                 for (Participant groupParticipant : groupParticipants) {
                     scores.add(matchService.calculateScore(groupParticipant));
                 }
 
-                Collections.sort(scores, Collections.reverseOrder());
+ //               Collections.sort(scores, Collections.reverseOrder());
                 int index = scores.indexOf(score);
 
                 PdfPCell sCell = new PdfPCell(new Phrase(
@@ -502,11 +625,13 @@ public class DocumentService {
                                           Font font,
                                           GroupTableTime groupTableTime,
                                           int groupOrder) {
-        Time time = groupTableTime.getTableTime().getTime();
-        Table groupTable = groupTableTime.getTableTime().getTable();
-        String title = "Grup " + groupOrder +
-                "    " + time.getStartTime() + "-" + time.getEndTime() + "    " +
-                groupTable.getName();
+        //Time time = groupTableTime.getTableTime().getTime();
+        //Table groupTable = groupTableTime.getTableTime().getTable();
+//        String title = "Grup " + groupOrder +
+//                "    " + time.getStartTime() + "-" + time.getEndTime() + "    " +
+//                groupTable.getName();
+
+        String title = "Grup " + groupOrder;
 
         Stream.of( title, "1", "2", "3", "4", "G", "M", "P", "S")
                 .forEach(columnTitle -> {

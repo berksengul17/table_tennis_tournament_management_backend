@@ -74,9 +74,9 @@ public class MatchService {
             if (participants.size() == 3) {
                 LocalTime startTime = groupTableTime.getTableTime().getTime().getStartTime();
                 List<Match> groupMatches = List.of(
-                        new Match(group, table,  participants.get(1), participants.get(2),
+                        new Match(group, table,  participants.get(0), participants.get(2),
                                 startTime, startTime.plusMinutes(20)),
-                        new Match(group, table, participants.get(0), participants.get(2),
+                        new Match(group, table, participants.get(1), participants.get(2),
                                 startTime.plusMinutes(20), startTime.plusMinutes(40)),
                         new Match(group, table, participants.get(0), participants.get(1),
                                 startTime.plusMinutes(40), startTime.plusMinutes(60)
@@ -86,19 +86,45 @@ public class MatchService {
             } else if (participants.size() == 4) {
                 LocalTime startTime = groupTableTime.getTableTime().getTime().getStartTime();
                 List<Match> groupMatches = List.of(
-                        new Match(group, table, participants.get(1), participants.get(3),
-                                startTime, startTime.plusMinutes(20)),
                         new Match(group, table, participants.get(0), participants.get(2),
+                                startTime, startTime.plusMinutes(20)),
+                        new Match(group, table, participants.get(1), participants.get(3),
                                 startTime.plusMinutes(20), startTime.plusMinutes(40)),
-                        new Match(group, table, participants.get(1), participants.get(2),
-                                startTime.plusMinutes(40), startTime.plusMinutes(60)),
                         new Match(group, table, participants.get(0), participants.get(3),
+                                startTime.plusMinutes(40), startTime.plusMinutes(60)),
+                        new Match(group, table, participants.get(1), participants.get(2),
                                 startTime.plusMinutes(60), startTime.plusMinutes(80)),
                         new Match(group, table, participants.get(2), participants.get(3),
                                 startTime.plusMinutes(80), startTime.plusMinutes(100)),
                         new Match(group, table, participants.get(0), participants.get(1),
                                 startTime.plusMinutes(100), startTime.plusMinutes(120))
                         );
+                matchRepository.saveAll(groupMatches);
+                matches.add(groupMatches);
+            } else if (participants.size() == 5) {
+                LocalTime startTime = groupTableTime.getTableTime().getTime().getStartTime();
+                List<Match> groupMatches = List.of(
+                        new Match(group, table, participants.get(2), participants.get(3),
+                                startTime, startTime.plusMinutes(12)),
+                        new Match(group, table, participants.get(1), participants.get(4),
+                                startTime.plusMinutes(12), startTime.plusMinutes(24)),
+                        new Match(group, table, participants.get(3), participants.get(4),
+                                startTime.plusMinutes(24), startTime.plusMinutes(36)),
+                        new Match(group, table, participants.get(0), participants.get(1),
+                                startTime.plusMinutes(36), startTime.plusMinutes(48)),
+                        new Match(group, table, participants.get(2), participants.get(4),
+                                startTime.plusMinutes(48), startTime.plusMinutes(60)),
+                        new Match(group, table, participants.get(0), participants.get(3),
+                                startTime.plusMinutes(60), startTime.plusMinutes(72)),
+                        new Match(group, table, participants.get(1), participants.get(3),
+                                startTime.plusMinutes(72), startTime.plusMinutes(84)),
+                        new Match(group, table, participants.get(0), participants.get(2),
+                                startTime.plusMinutes(84), startTime.plusMinutes(96)),
+                        new Match(group, table, participants.get(1), participants.get(2),
+                                startTime.plusMinutes(96), startTime.plusMinutes(108)),
+                        new Match(group, table, participants.get(0), participants.get(4),
+                                startTime.plusMinutes(108), startTime.plusMinutes(120))
+                );
                 matchRepository.saveAll(groupMatches);
                 matches.add(groupMatches);
             }

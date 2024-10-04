@@ -33,6 +33,7 @@ public class SMSService {
         Twilio.init(ACCOUNT_SID, AUTH_TOKEN);
     }
 
+    // take age category as parameter
     public void sendMatchInfoSms() {
         List<Match> matches = matchRepository.findAll();
         for (Match match : matches) {
